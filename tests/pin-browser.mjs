@@ -15,6 +15,7 @@ async function configure(pin,mode='enable',current=''){
  await page.locator(`nav a[data-view=settings]`).click();await page.locator('#pin-'+mode).click();if(mode!=='enable')await page.locator('#pin-current').fill(current);
  if(mode!=='disable'){await page.locator('#pin-new').fill(pin);await page.locator('#pin-confirm').fill(pin);await page.locator('#pin-ack').check();}
  await page.locator('#pin-save').click();
+ if(mode!=='disable'){await page.waitForFunction(()=>document.getElementById('save-recovery-dialog').open||document.getElementById('pin-error').textContent);if(await page.locator('#save-recovery-dialog').isVisible()){await page.locator('#recovery-saved').check();await page.locator('#recovery-finish').click();await page.locator('#save-recovery-dialog').waitFor({state:'hidden'});}}
 }
 async function add(description,amount){await page.locator('#add-button').click();await page.locator('#description').fill(description);await page.locator('#amount').fill(amount);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});}
 try{

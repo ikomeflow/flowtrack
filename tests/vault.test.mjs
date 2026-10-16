@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {LedgerVault,validateVault,validatePin} from '../dist/vault-v3.mjs';
+import {LedgerVault,validateVault,validatePin} from '../dist/vault-v4.mjs';
 import {STORAGE_KEY} from '../dist/core.mjs';
 const ledger={version:1,currency:'GHS',transactions:[{id:'private-id',description:'Private description',amount:12345,type:'income',date:'2026-10-16',tags:['Secret']}]};
 function storage(){const map=new Map();return {getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)};}
