@@ -4,6 +4,8 @@ Verified on 16 October 2026 in headless Microsoft Edge (Chromium) on Windows. No
 
 ## Automated checks
 
+- Version 1.3: 25 unit tests and 96 browser assertions passed (54 general, 23 PIN and 19 recovery). Coverage includes staged recovery setup/cancellation, latest-record preservation after reset, wrong-key rejection, fresh data/recovery keys after PIN changes, legacy PIN migration, quota failures, stale writes and old-wrapper rejection. Browser tests used synthetic ledgers in isolated Edge contexts; no normal browser records or real credentials were used.
+- Version 1.3: the real v1 service-worker-to-current upgrade passed with exact record/theme preservation and offline reopening. No browser runtime errors were detected.
 - Version 1.2: 17 unit tests passed, including ciphertext round trips, wrong PINs, tampering, nonce freshness, lock cancellation of pending writes, PIN changes/removal, quota failure, stale tabs, locked-copy restore and malformed input.
 - Version 1.2: the full 54-assertion general browser suite and 23 additional PIN browser assertions passed. PIN checks cover setup mismatch, local encryption, locking and DOM clearing, reopening, wrong/correct PINs, encrypted writes, backup/restore, cross-tab locking, PIN change/removal, five-minute automatic locking, offline unlock, a 320px screen, recovery-copy download, reset cancellation/confirmation and locked-copy restoration. All records were synthetic in an isolated browser profile.
 - The v1-to-current service-worker upgrade check also passed with exact ledger preservation and offline reopening. Device-specific keyboards, real screen readers and slow-device key-derivation performance have not been audited.
@@ -35,6 +37,7 @@ In a second terminal:
 ```sh
 node tests/browser.mjs
 node tests/pin-browser.mjs
+node tests/recovery-browser.mjs
 ```
 
 The browser suite creates temporary, synthetic financial records in an isolated browser context, downloads test backups and writes screenshots under ignored `test-results/`. It never reads your normal browser profile. It expects port 4173 unless `FLOWTRACK_QA_URL` is set. `FLOWTRACK_QA_BROWSER` optionally selects a locally installed Chromium/Edge executable. In environments with a shared package bundle, `FLOWTRACK_QA_PACKAGE_ROOT` can point to that bundle's Node package root.
@@ -48,4 +51,4 @@ The browser suite creates temporary, synthetic financial records in an isolated 
 - When changing app-shell files, increment the service-worker cache version and test the update banner.
 - Validate GitHub Pages using the provided workflow on your own repository. GitHub publication and the ikomeflow.com portfolio link are separate deployment steps.
 
-The core uses safe integer hundredths, not floating-point totals. Browser local storage is neither encrypted nor a guaranteed backup. Accessibility semantics and keyboard controls are present; a full screen-reader audit and real-device testing remain recommended.
+The core uses safe integer hundredths, not floating-point totals. Records are encrypted locally when the optional PIN is enabled; browser storage is never a guaranteed backup. A recovery key must be saved before the PIN is forgotten. Accessibility semantics and keyboard controls are present; a full screen-reader audit and real-device testing remain recommended.
