@@ -4,6 +4,8 @@ Verified on 16 October 2026 in headless Microsoft Edge (Chromium) on Windows. No
 
 ## Automated checks
 
+- Version 1.1: all 9 unit tests and 54 browser assertions passed. New coverage checks dark/light surfaces, saved preferences after reload, exact ledger preservation, themed transaction inputs, offline appearance, device preference, explicit overrides, cross-tab theme sync, and switching themes when storage is blocked.
+- Upgrade check: a real v1 service-worker installation was updated to v2 with a synthetic ledger; the new interface loaded before worker activation, the update banner applied, and exact records plus the theme survived an offline reload without runtime errors.
 - JavaScript syntax checks for the app, shared core and service worker.
 - 9 Node unit tests: exact decimal amounts, month totals, search and filters, valid calendar dates, JSON round trips, malformed backups, transaction validation, CSV safety and currency relabeling.
 - 43 browser assertions: empty state; add/edit/delete/cancel; reload persistence; combined search and type filters; calendar; currency confirm/cancel; actual JSON and CSV downloads; clear and restore; invalid-restore preservation; demo isolation; all four views at widths 320, 375, 768 and 1024; 390px mobile layout; offline reload and entry; cross-tab refresh; corrupt-data preservation; storage-disabled notice; no JavaScript runtime errors.

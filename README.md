@@ -10,6 +10,8 @@ See [WordPress integration notes](wordpress/INTEGRATION.md) for the current depl
 
 ## What works
 
+- Light and dark modes from the sun/moon button. Follows the device appearance initially; an explicit choice is saved separately from the ledger, works offline, and synchronizes between tabs.
+- Compact screens with short labels and expandable privacy and installation details.
 - Monthly income, expenses and net; a six-month cash-flow chart and spending by primary tag.
 - Add, edit and delete transactions: description, amount, income/expense, date and up to five optional tags.
 - Search descriptions/tags, filter types, selected month or all time, and inspect daily calendar history.
@@ -68,6 +70,8 @@ Use a dedicated origin for financial records if hosting other apps. All pages on
 
 ## Offline use and updates
 
+Version 1.1 uses `app-v2.mjs` and `styles-v2.css` so existing v1 offline installations never mix an old cached script with new page markup. For future incompatible shell releases, use new asset filenames as well as a new service-worker cache version. Keep the `flowtrack.v1` ledger schema unchanged unless adding an explicit data migration. The theme preference uses the separate `flowtrack.theme` key and is a device preference, not part of ledger backups.
+
 Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. Settings reports whether offline files are ready. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
 
 The app checks for service-worker updates during visits. A banner offers to apply a waiting update. When editing the shell, change the `CACHE` version in `dist/sw.js`. Do not reuse a cache name for different app releases. JSON backups remain compatible as long as the schema stays at version 1. See [MDN's service-worker guide](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers).
@@ -77,8 +81,8 @@ The app checks for service-worker updates during visits. A banner offers to appl
 ```text
 dist/                 Publish this folder, as-is
   index.html          Responsive UI and accessible dialogs
-  styles.css          Blue-and-white visual system
-  app.mjs             UI, persistence, downloads, PWA registration
+  styles-v2.css          Blue-and-white visual system
+  app-v2.mjs             UI, persistence, downloads, PWA registration
   core.mjs            Validation, exact amounts, filtering, CSV
   sw.js               Versioned offline shell
   manifest.webmanifest, icon*   Installation metadata/assets
