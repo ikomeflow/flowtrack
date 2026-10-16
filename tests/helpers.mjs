@@ -1,5 +1,5 @@
-import {LedgerVault} from '../dist/vault-v5.mjs';
-export const TEST_PIN='839271';
+import {LedgerVault} from '../dist/vault-v6.mjs';
+export const TEST_PIN='8392';
 export async function finishRecovery(page){const key=await page.locator('#generated-recovery').inputValue();await page.locator('#recovery-saved').check();await page.locator('#recovery-finish').click();await page.locator('#save-recovery-dialog').waitFor({state:'hidden'});if(await page.locator('#device-offer-dialog').isVisible())await page.locator('#device-offer-later').click();return key;}
 export async function openApp(page,pin=TEST_PIN){
  await page.waitForFunction(()=>!document.getElementById('app-shell').hidden||!document.getElementById('setup-screen').hidden||!document.getElementById('lock-screen').hidden);
