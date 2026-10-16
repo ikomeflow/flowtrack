@@ -10,7 +10,7 @@ See [WordPress integration notes](wordpress/INTEGRATION.md) for the current depl
 
 ## What works
 
-- **First use asks for PIN setup.** Choose 6–12 digits and save the generated recovery key before the personal ledger opens. Existing unprotected records are preserved and remain unchanged until setup finishes. No PIN is set automatically; cancellation keeps the setup gate and original records. PIN protection cannot be turned off in the interface.
+- **First use asks for PIN setup.** Choose 4 digits and save the generated recovery key before the personal ledger opens. Existing unprotected records are preserved and remain unchanged until setup finishes. No PIN is set automatically; cancellation keeps the setup gate and original records. PIN protection cannot be turned off in the interface.
 - Optional **Settings → PIN lock → Enable device unlock**. Compatible platform passkeys use face recognition, fingerprint or the device screen-lock PIN. The browser chooses the method; FlowTrack does not receive biometric data. The FlowTrack PIN always remains available. A first-use offer can be dismissed.
 - The portfolio launches a named app tab at `/#overview`. A repeat click in the same browsing session can reuse that already-unlocked document without reloading. A closed/reloaded tab, five idle minutes, or Lock now requires verification again. No unlocked key or PIN is saved to browser storage.
 - **Forgot PIN → Reset PIN** uses a recovery key saved beforehand and preserves every record. Existing PIN users can add recovery from Settings after unlocking once. A new PIN or a replacement recovery key issues a fresh key to save.
@@ -89,7 +89,7 @@ Use a dedicated origin for financial records if hosting other apps. All pages on
 
 ## Offline use and updates
 
-Version 1.5 uses `app-v6.mjs`, `styles-v6.css`, `vault-v5.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
+Version 1.5 uses `app-v7.mjs`, `styles-v6.css`, `vault-v6.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
 
 Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. Settings reports whether offline files are ready. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
 
@@ -101,8 +101,8 @@ The app checks for service-worker updates during visits. A banner offers to appl
 dist/                 Publish this folder, as-is
   index.html          Responsive UI and accessible dialogs
   styles-v6.css       Minimal light/dark visual system
-  app-v6.mjs          Required PIN, device unlock, UI, downloads, PWA
-  vault-v5.mjs        Encrypted storage, device key wrapping, recovery
+  app-v7.mjs          Required PIN, device unlock, UI, downloads, PWA
+  vault-v6.mjs        Encrypted storage, device key wrapping, recovery
   device-v1.mjs       Platform WebAuthn PRF and verification checks
   theme.js            Appearance preference before rendering
   core.mjs            Validation, exact amounts, filtering, CSV
@@ -119,3 +119,5 @@ LICENSE               MIT
 Keep the app lightweight, usable on small screens and honest about privacy. Avoid adding tracking, mandatory registration or network dependencies. Run checks and tests, then verify mobile, offline and backup flows before proposing changes. Never commit real financial records.
 
 
+
+New and reset PINs use exactly four digits. Existing 6–12 digit PINs still unlock their original records and backups; change them in Settings → PIN lock → Change PIN. Existing PINs are never truncated.
