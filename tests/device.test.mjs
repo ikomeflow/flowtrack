@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {LedgerVault,validateVault} from '../dist/vault-v6.mjs';
+import {LedgerVault,validateVault} from '../dist/vault-v7.mjs';
 import {STORAGE_KEY} from '../dist/core.mjs';
 const ledger={version:1,currency:'XAF',transactions:[{id:'one',description:'Device test',amount:12345,type:'income',date:'2026-10-16',tags:[]}]};
 const descriptor=()=>({id:'c3ludGhldGljLWNyZWRlbnRpYWw',salt:'c2FsdC1mb3ItdGhlLWRldmljZS11bmxvY2stdGVzdHM',rpId:'localhost',secret:crypto.getRandomValues(new Uint8Array(32))});
