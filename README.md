@@ -10,6 +10,7 @@ See [WordPress integration notes](wordpress/INTEGRATION.md) for the current depl
 
 ## What works
 
+- Optional **Settings → PIN lock**. Choose 6–12 digits and confirm the no-reset warning. Protected ledgers use local encryption and lock on reopening, after five idle minutes, or with Lock now. No PIN is set for users automatically.
 - Light and dark modes from the sun/moon button. Follows the device appearance initially; an explicit choice is saved separately from the ledger, works offline, and synchronizes between tabs.
 - Compact screens with short labels and expandable privacy and installation details.
 - Monthly income, expenses and net; a six-month cash-flow chart and spending by primary tag.
@@ -60,17 +61,23 @@ Suggested copy: “A free, private income and expense tracker. No signup. Track 
 
 ## Privacy and backups — please read
 
-Transactions live under `flowtrack.v1` in `localStorage`, scoped to this website origin and browser profile. They are **not encrypted**. Other people who can access this profile can read them. The app sends no records to any server. Hosting providers can receive normal web request logs when serving the files.
+Transactions live under `flowtrack.v1` in `localStorage`, scoped to this website origin and browser profile. They are readable without a PIN. Enabling the optional PIN atomically replaces the plaintext ledger with authenticated ciphertext at the same key. The app sends no records or PINs to any server. Hosting providers can receive normal web request logs when serving the files.
+
+PIN encryption uses the browser's [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey): AES-256-GCM, a fresh random 96-bit nonce per write, and a 128-bit random salt with PBKDF2-HMAC-SHA-256 at 600,000 iterations. The derivation cost follows [OWASP's PBKDF2 guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). The derived key is non-extractable and held in memory while unlocked. The PIN feature persists no PIN, key, or plaintext duplicate. Changing or disabling it requires the current PIN. Locking clears the rendered ledger and working state, discards the key, and closes unfinished dialogs; unsaved drafts are lost. A manual lock signals other open tabs. Another tab changing the encrypted ledger locks this tab.
+
+**A local privacy lock has limits.** A short numeric PIN can be guessed offline by someone who obtains the locked file; UI delays cannot prevent that attack. This does not protect an unlocked browser, malicious extensions, malware, or compromised same-origin JavaScript, and cannot securely erase earlier plaintext from disk history or device backups. Prefer a longer, unpredictable PIN and protect the device itself. There is no PIN reset service.
+
+Normal JSON backups and CSV exports are **unencrypted**, including when PIN lock is on. Keep them private. The lock screen can save an encrypted copy, restorable from Settings with its original PIN. If the PIN is forgotten, a confirmed device reset erases the locked ledger and PIN; a separate normal JSON backup can then restore the records. Reset cancellation preserves the original. Save a locked copy before resetting if you may remember its PIN later.
 
 There is no recovery service, account, cross-device sync or cloud backup. Clearing browser/site data, private browsing, device loss or browser cleanup can erase records. Moving between localhost, GitHub Pages, a custom domain or a different browser creates a separate ledger. Use **Settings → Back up** regularly, keep the JSON file privately, and restore it on the new address or device. CSV is for spreadsheets, not restoration. Protect downloaded exports: they contain readable financial data.
 
-Storage failures show a visible notice. If storage is unavailable, records only last for the open session. If saving fails due to quota, the change is rejected and the existing ledger remains. Unreadable stored data is preserved and blocks edits; download the original using Settings, then restore a known-good backup. Restore and clear actions require confirmation. JSON restores replace, rather than merge, the ledger. Backups are limited to 20 MB and 50,000 entries; amounts use integer hundredths with safe-total checks.
+Storage failures show a visible notice. If storage is unavailable, unprotected records last only for the open session and PIN setup is unavailable. Protected saves fail without replacing the ciphertext. Quota failures and concurrent changes reject the pending write. Unreadable data is preserved and blocks edits; download the original using Settings, then restore a known-good backup. Restore and clear actions require confirmation. JSON restores replace the ledger. Imports are limited to 32 MB and 50,000 entries; amounts use integer hundredths with safe-total checks.
 
 Use a dedicated origin for financial records if hosting other apps. All pages on the same origin can technically access its browser storage. FlowTrack is a personal record keeper; its monthly net is not a bank-account balance.
 
 ## Offline use and updates
 
-Version 1.1 uses `app-v2.mjs` and `styles-v2.css` so existing v1 offline installations never mix an old cached script with new page markup. For future incompatible shell releases, use new asset filenames as well as a new service-worker cache version. Keep the `flowtrack.v1` ledger schema unchanged unless adding an explicit data migration. The theme preference uses the separate `flowtrack.theme` key and is a device preference, not part of ledger backups.
+Version 1.2 uses `app-v3.mjs`, `styles-v3.css` and `vault-v3.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. Protected local storage uses a version-1 `flowtrack-vault` envelope. Earlier apps treat it as unreadable and block edits; do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of ledger backups.
 
 Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. Settings reports whether offline files are ready. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
 
@@ -81,8 +88,10 @@ The app checks for service-worker updates during visits. A banner offers to appl
 ```text
 dist/                 Publish this folder, as-is
   index.html          Responsive UI and accessible dialogs
-  styles-v2.css          Blue-and-white visual system
-  app-v2.mjs             UI, persistence, downloads, PWA registration
+  styles-v3.css       Compact light/dark visual system
+  app-v3.mjs          UI, persistence, PIN gate, downloads, PWA
+  vault-v3.mjs        Local encrypted storage and safe migration
+  theme.js            Appearance preference before rendering
   core.mjs            Validation, exact amounts, filtering, CSV
   sw.js               Versioned offline shell
   manifest.webmanifest, icon*   Installation metadata/assets

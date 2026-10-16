@@ -4,6 +4,9 @@ Verified on 16 October 2026 in headless Microsoft Edge (Chromium) on Windows. No
 
 ## Automated checks
 
+- Version 1.2: 17 unit tests passed, including ciphertext round trips, wrong PINs, tampering, nonce freshness, lock cancellation of pending writes, PIN changes/removal, quota failure, stale tabs, locked-copy restore and malformed input.
+- Version 1.2: the full 54-assertion general browser suite and 23 additional PIN browser assertions passed. PIN checks cover setup mismatch, local encryption, locking and DOM clearing, reopening, wrong/correct PINs, encrypted writes, backup/restore, cross-tab locking, PIN change/removal, five-minute automatic locking, offline unlock, a 320px screen, recovery-copy download, reset cancellation/confirmation and locked-copy restoration. All records were synthetic in an isolated browser profile.
+- The v1-to-current service-worker upgrade check also passed with exact ledger preservation and offline reopening. Device-specific keyboards, real screen readers and slow-device key-derivation performance have not been audited.
 - Version 1.1: all 9 unit tests and 54 browser assertions passed. New coverage checks dark/light surfaces, saved preferences after reload, exact ledger preservation, themed transaction inputs, offline appearance, device preference, explicit overrides, cross-tab theme sync, and switching themes when storage is blocked.
 - Upgrade check: a real v1 service-worker installation was updated to v2 with a synthetic ledger; the new interface loaded before worker activation, the update banner applied, and exact records plus the theme survived an offline reload without runtime errors.
 - JavaScript syntax checks for the app, shared core and service worker.
@@ -31,6 +34,7 @@ In a second terminal:
 
 ```sh
 node tests/browser.mjs
+node tests/pin-browser.mjs
 ```
 
 The browser suite creates temporary, synthetic financial records in an isolated browser context, downloads test backups and writes screenshots under ignored `test-results/`. It never reads your normal browser profile. It expects port 4173 unless `FLOWTRACK_QA_URL` is set. `FLOWTRACK_QA_BROWSER` optionally selects a locally installed Chromium/Edge executable. In environments with a shared package bundle, `FLOWTRACK_QA_PACKAGE_ROOT` can point to that bundle's Node package root.
