@@ -7,7 +7,13 @@ Completed on 16 October 2026.
 - Portfolio page: https://ikomeflow.com/flowtrack/
 - Application: https://flowtrack.ikomeflow.com/
 - Source repository: https://github.com/ikomeflow/flowtrack
-- Successful deployment run: https://github.com/ikomeflow/flowtrack/actions/runs/38889804877
+- PIN/device-unlock deployment: https://github.com/ikomeflow/flowtrack/actions/runs/38956073452
+
+## App entry and quick unlock
+
+The homepage Work card and project-page launch/preview links open `https://flowtrack.ikomeflow.com/#overview` with `target="flowtrack-app"`. This reuses an existing app tab within a related browsing session where the browser permits it. Do not add `rel="noopener"` to these own-app named-target links: it defeats named-tab reuse. New browsing sessions, reloads, closing the app, manual locking and the five-minute idle lock require verification again. No persistent unlocked key is stored.
+
+First use requires a PIN and acknowledgement that the recovery key has been saved. Existing unprotected records are preserved until setup is completed. Optional **Settings → PIN lock → Quick unlock** uses a compatible platform authenticator with WebAuthn PRF. The device chooses face recognition, fingerprint or device PIN. Unsupported devices retain PIN access. WordPress login is separate; it cannot unlock the local ledger or synchronize it.
 
 The WordPress page uses the homepage's navy-and-blue design, a brief introduction, an app preview labeled as sample data, and a direct launch link. Source-code buttons have been removed from the user-facing page. Privacy and backup information is in an expandable disclosure, including the requirement to save a recovery key before forgetting a PIN. FlowTrack is also in the homepage navigation and appears first in its Selected work carousel; the eight existing projects are retained. The app runs independently on GitHub Pages. WordPress does not store visitors' financial records.
 
