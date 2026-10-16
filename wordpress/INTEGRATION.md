@@ -9,7 +9,7 @@ Completed on 16 October 2026.
 - Source repository: https://github.com/ikomeflow/flowtrack
 - Successful deployment run: https://github.com/ikomeflow/flowtrack/actions/runs/38889804877
 
-The WordPress page introduces FlowTrack, shows a screenshot clearly labeled as demo data, explains features and local-storage limitations, and links directly to the app and its source. The app runs independently on GitHub Pages. WordPress does not store visitors' financial records.
+The WordPress page uses the homepage's navy-and-blue design, a brief introduction, an app preview labeled as sample data, and a direct launch link. Source-code buttons have been removed from the user-facing page. Privacy and backup information is in an expandable disclosure, including the requirement to save a recovery key before forgetting a PIN. FlowTrack is also in the homepage navigation and appears first in its Selected work carousel; the eight existing projects are retained. The app runs independently on GitHub Pages. WordPress does not store visitors' financial records.
 
 ## Hosting configuration
 
@@ -33,7 +33,7 @@ The existing apex, www, FTP and verification records were retained. No nameserve
 
 ## WordPress editing
 
-Edit the **FlowTrack** page under Pages. Its page ID is 337. The page uses standard WordPress blocks and the site's existing theme; it needs no new plugin. `flowtrack-page.html` is a portable copy of the block markup.
+Edit the **FlowTrack** page under Pages. Its page ID is 337. The page uses a Custom HTML block with styling copied from the homepage; it needs no new plugin. `flowtrack-page.html` is a portable copy of the markup. The homepage is page ID 5; `homepage-flowtrack-card.html` contains the new carousel card. Its carousel has nine slides and nine controls after this update.
 
 The screenshot is attachment 339, with alt text and a demo caption. It is stored at https://ikomeflow.com/wp-content/uploads/2026/10/flowtrack-desktop.png.
 
