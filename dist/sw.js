@@ -1,7 +1,7 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v8-20261016-simple-pin';
-const SHELL=['./','index.html','styles-v6.css','theme.js','app-v8.mjs','core.mjs','vault-v7.mjs','device-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'].map(p=>new URL(p,BASE).href);
+const CACHE=PREFIX+'v9-20261016-brief-device';
+const SHELL=['./','index.html','styles-v6.css','theme.js','app-v9.mjs','core.mjs','vault-v8.mjs','device-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'].map(p=>new URL(p,BASE).href);
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting();});
