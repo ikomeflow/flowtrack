@@ -4,6 +4,8 @@ Verified on 16 October 2026 in headless Microsoft Edge (Chromium) on Windows. No
 
 ## Automated checks
 
+- Version 1.9: 40 unit tests and 111 browser assertions passed (59 general, 24 PIN and 28 fast Add/Undo checks). Amount-only entries keep the existing backup schema using Expense/Income labels. Coverage includes rapid double submission, exact batch restoration, newer edits/additions surviving Undo, quota failures and retry, 30-second expiry, clearing temporary Undo on lock or demo changes, cross-tab changes, and offline Add/Undo/reload. Light and dark Add forms and Undo were visually reviewed at 320px; the general suite also checked widths 375, 768 and 1024. Tests use synthetic records in isolated browser contexts.
+
 - Version 1.5.1: 34 unit tests and 121 browser assertions passed with four-digit PINs. New/reset PIN validation rejects shorter and longer values; leading zeros work. Previous six-digit v2 PINs unlock unchanged records and can change to four digits. Legacy v1 recovery migration, offline unlock/reset and virtual-device unlock also passed.
 
 - Version 1.5: 33 unit tests and 121 browser assertions passed (59 general, 23 PIN, 19 recovery and 20 device/required-setup checks). Device checks use Chromium's real WebAuthn API with a synthetic CTAP2.1 platform authenticator supporting PRF, not actual user credentials. They verify encrypted enrollment/unlock, PIN fallback, a reused unlocked app tab, new-document locking, offline device unlock, removal cancellation/key rotation, and an authenticator without PRF. Cancellation is simulated by a standard NotAllowedError. Real Face ID, fingerprints and Windows Hello hardware have not been enrolled or tested.
@@ -45,6 +47,7 @@ node tests/browser.mjs
 node tests/pin-browser.mjs
 node tests/recovery-browser.mjs
 node tests/device-browser.mjs
+node tests/fast-add-browser.mjs
 ```
 
 The browser suite creates temporary, synthetic financial records in an isolated browser context, downloads test backups and writes screenshots under ignored `test-results/`. It never reads your normal browser profile. It expects port 4173 unless `FLOWTRACK_QA_URL` is set. `FLOWTRACK_QA_BROWSER` optionally selects a locally installed Chromium/Edge executable. In environments with a shared package bundle, `FLOWTRACK_QA_PACKAGE_ROOT` can point to that bundle's Node package root.
@@ -58,4 +61,4 @@ The browser suite creates temporary, synthetic financial records in an isolated 
 - When changing app-shell files, increment the service-worker cache version and test the update banner.
 - Validate GitHub Pages using the provided workflow on your own repository. GitHub publication and the ikomeflow.com portfolio link are separate deployment steps.
 
-The core uses safe integer hundredths, not floating-point totals. Records are encrypted locally when the optional PIN is enabled; browser storage is never a guaranteed backup. A recovery key must be saved before the PIN is forgotten. Accessibility semantics and keyboard controls are present; a full screen-reader audit and real-device testing remain recommended.
+The core uses safe integer hundredths, not floating-point totals. Personal use requires a PIN and records are encrypted locally; browser storage is never a guaranteed backup. Optional recovery must be configured and its key saved before the PIN is forgotten. Undo is temporary and expires 30 seconds after the latest deletion, or on lock, refresh, ledger replacement or demo changes. Accessibility semantics and keyboard controls are present; a full screen-reader audit and real-device testing remain recommended.
