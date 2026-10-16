@@ -4,6 +4,10 @@
 
 No signup, backend, external fonts, analytics, or runtime dependencies. A small, buildless web app using HTML, CSS and JavaScript modules. MIT licensed.
 
+Live app: [flowtrack.ikomeflow.com](https://flowtrack.ikomeflow.com/) · [Project page](https://ikomeflow.com/flowtrack/) · [GitHub source](https://github.com/ikomeflow/flowtrack)
+
+See [WordPress integration notes](wordpress/INTEGRATION.md) for the current deployment and DNS configuration.
+
 ## What works
 
 - Monthly income, expenses and net; a six-month cash-flow chart and spending by primary tag.
@@ -50,7 +54,7 @@ After GitHub Pages confirms deployment, add a portfolio card to ikomeflow.com wi
 - **Open FlowTrack** → your verified live GitHub Pages URL.
 - **View source on GitHub** → your public repository URL.
 
-Suggested copy: “A free, private income and expense tracker. No signup. Track your progress, even offline.” Open as a full page for the most reliable storage and installation experience. No change to ikomeflow.com is included in this source package.
+Suggested copy: “A free, private income and expense tracker. No signup. Track your progress, even offline.” Open as a full page for the most reliable storage and installation experience. The wordpress/ folder contains the published project page markup and integration notes for ikomeflow.com.
 
 ## Privacy and backups — please read
 
