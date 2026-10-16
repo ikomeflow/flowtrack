@@ -4,6 +4,8 @@ Verified on 16 October 2026 in headless Microsoft Edge (Chromium) on Windows. No
 
 ## Automated checks
 
+- Version 1.10: 41 unit tests and 142 browser assertions passed (59 general, 28 fast Add/Undo and 55 phone-layout checks). Phone checks cover widths 320, 360, 375, 390 and 430, the bottom Add action, a single heading/month row, expanded filters/settings, calendar controls, input text sizes, Undo above navigation, scrolling to the last entry and large amounts. Same-day additions now appear before older entries regardless of random IDs. Light/dark Home, History, Calendar and Settings were visually reviewed. Phone tests use Chromium with touch/mobile emulation and an iPhone viewport/user agent; a physical iPhone, Safari/WebKit and its native keyboard/picker were not available for testing.
+
 - Version 1.9: 40 unit tests and 111 browser assertions passed (59 general, 24 PIN and 28 fast Add/Undo checks). Amount-only entries keep the existing backup schema using Expense/Income labels. Coverage includes rapid double submission, exact batch restoration, newer edits/additions surviving Undo, quota failures and retry, 30-second expiry, clearing temporary Undo on lock or demo changes, cross-tab changes, and offline Add/Undo/reload. Light and dark Add forms and Undo were visually reviewed at 320px; the general suite also checked widths 375, 768 and 1024. Tests use synthetic records in isolated browser contexts.
 
 - Version 1.5.1: 34 unit tests and 121 browser assertions passed with four-digit PINs. New/reset PIN validation rejects shorter and longer values; leading zeros work. Previous six-digit v2 PINs unlock unchanged records and can change to four digits. Legacy v1 recovery migration, offline unlock/reset and virtual-device unlock also passed.
@@ -48,6 +50,7 @@ node tests/pin-browser.mjs
 node tests/recovery-browser.mjs
 node tests/device-browser.mjs
 node tests/fast-add-browser.mjs
+node tests/mobile-browser.mjs
 ```
 
 The browser suite creates temporary, synthetic financial records in an isolated browser context, downloads test backups and writes screenshots under ignored `test-results/`. It never reads your normal browser profile. It expects port 4173 unless `FLOWTRACK_QA_URL` is set. `FLOWTRACK_QA_BROWSER` optionally selects a locally installed Chromium/Edge executable. In environments with a shared package bundle, `FLOWTRACK_QA_PACKAGE_ROOT` can point to that bundle's Node package root.

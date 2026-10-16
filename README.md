@@ -15,9 +15,9 @@ See [WordPress integration notes](wordpress/INTEGRATION.md) for the current depl
 - The portfolio launches a named app tab at `/#overview`. A repeat click in the same browsing session can reuse that already-unlocked document without reloading. A closed/reloaded tab, 30 idle minutes, or Lock now requires verification again. If device unlock is enabled, opening a locked app or returning to its tab automatically requests device verification once. Cancellation or failure shows the PIN and a manual retry; focus changes do not repeatedly prompt. Manual Lock now stays locked until the user chooses to unlock or leaves and returns. Background tabs do not start verification. Browsers that block automatic verification retain the manual button. No unlocked key or PIN is saved to browser storage.
 - **Forgot PIN → Recover PIN** uses a recovery key saved beforehand and preserves every record. Existing PIN users can add recovery from Settings after unlocking once. Recovering or changing a PIN keeps the existing recovery code. Only replacing a recovery key issues a fresh code to save.
 - Light and dark modes from the sun/moon button. Follows the device appearance initially; an explicit choice is saved separately from the ledger, works offline, and synchronizes between tabs.
-- Three main destinations: **Home, History and Settings**. Home shows the monthly balance, smaller income/expense totals and five recent entries, without charts or extra cards.
+- Three main destinations: **Home, History and Settings**. On phones, Add is a separate action in the bottom navigation. Safe-area padding protects the iPhone home indicator, the month selector shares the Home heading row, and a readable caption opens the native month picker. Calendar controls stack on narrow screens; phone inputs use at least 16px text to avoid focus zoom. Home shows the monthly balance, smaller income/expense totals and five recent entries, without charts or extra cards.
 - **+ Add** starts with amount and defaults to Expense. Description is optional; a blank description is saved as Expense or Income, keeping backups compatible. Date defaults to today; date and up to five tags stay under **More options**. One Save updates totals and closes the form. Tap an entry to edit it. Delete acts immediately and offers Undo for 30 seconds after the latest deletion; Undo restores the current batch of recent deletions, preserving other edits and additions. Undo is temporary in-memory state: locking, refreshing, importing, clearing, another tab changing the ledger, or switching demo mode discards it. Export backups regularly. Clear-all and restore still require confirmation.
-- History searches descriptions/tags across all dates by default. Type and month filters expand on demand. The calendar icon opens daily history; its back arrow returns to the list.
+- History searches descriptions/tags across all dates by default. New additions appear first within the same day, using ledger insertion order instead of random IDs. Type and month filters expand on demand. The calendar icon opens daily history; its back arrow returns to the list.
 - Settings keeps currency visible, with PIN, installation, backup/export, clear-data and privacy details grouped into expandable rows. Sample data is available from Settings and never changes the personal ledger.
 - African and global currency choices, default XAF. **Display only: changing currency relabels the whole ledger and never converts any amounts.** Each ledger has one currency. All currencies display two decimals for consistent entry; this is a personal tracker, not a payment processor.
 - CSV export of all records or current search results, with spreadsheet-formula neutralization. JSON backup and validated restore.
@@ -71,7 +71,7 @@ PIN creation and changes commit immediately after confirmation, without a recove
 
 Changing or disabling protection requires the current PIN; forgotten-PIN reset requires the matching recovery key. Locking clears the rendered ledger and working state, discards the key and staged setup, and closes unfinished dialogs; unsaved drafts are lost. Manual locking signals other tabs. Another tab changing the protected ledger locks this tab.
 
-Version 1.9 requires PIN setup for personal use. Device unlock uses the [WebAuthn PRF extension](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/WebAuthn_extensions#prf): a platform credential, required user verification, a random 256-bit input, and a credential-derived 256-bit secret wrap the ledger's actual data key with AES-GCM. Credential ID, RP ID, PRF input and wrapped ciphertext are saved; the PRF result and raw data key are not. Assertion challenge, origin, credential ID, RP hash, user-presence and user-verification flags are checked before accepting the PRF result. There is no server account or server authentication session; successful authenticated decryption is the local access check.
+Version 1.10 requires PIN setup for personal use. Device unlock uses the [WebAuthn PRF extension](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/WebAuthn_extensions#prf): a platform credential, required user verification, a random 256-bit input, and a credential-derived 256-bit secret wrap the ledger's actual data key with AES-GCM. Credential ID, RP ID, PRF input and wrapped ciphertext are saved; the PRF result and raw data key are not. Assertion challenge, origin, credential ID, RP hash, user-presence and user-verification flags are checked before accepting the PRF result. There is no server account or server authentication session; successful authenticated decryption is the local access check.
 
 Device unlock needs both a platform authenticator and PRF support. Unsupported, cancelled or failed enrollment leaves PIN/recovery access and stored records unchanged. Registration may require two device confirmations. A passkey created before an unsupported or cancelled second step may remain in the device's credential manager; the app does not gain an unlock route unless encrypted setup succeeds. Passkey providers may sync credentials; **the ledger does not sync**. Never promise facial recognition specifically: the platform may use fingerprints, a device PIN or another supported verification method. See [Google's user-verification explanation](https://web.dev/articles/webauthn-user-verification).
 
@@ -89,7 +89,7 @@ Use a dedicated origin for financial records if hosting other apps. All pages on
 
 ## Offline use and updates
 
-Version 1.9 uses `app-v11.mjs`, `styles-v7.css`, `vault-v8.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
+Version 1.10 uses `app-v12.mjs`, `styles-v9.css`, `vault-v8.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
 
 Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. Settings reports whether offline files are ready. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
 
@@ -100,12 +100,13 @@ The app checks for service-worker updates during visits. A banner offers to appl
 ```text
 dist/                 Publish this folder, as-is
   index.html          Responsive UI and accessible dialogs
-  styles-v7.css       Minimal light/dark visual system
-  app-v11.mjs          Required PIN, device unlock, UI, downloads, PWA
+  styles-v9.css       Minimal light/dark visual system
+  app-v12.mjs          Required PIN, device unlock, UI, downloads, PWA
   vault-v8.mjs        Encrypted storage, device key wrapping, recovery
   device-v1.mjs       Platform WebAuthn PRF and verification checks
   theme.js            Appearance preference before rendering
-  core.mjs            Validation, exact amounts, filtering, CSV
+  core-v2.mjs         Current validation, exact amounts, insertion-order history, CSV
+  core.mjs            Compatible shared validation for existing vault modules
   sw.js               Versioned offline shell
   manifest.webmanifest, icon*   Installation metadata/assets
 tests/                Node unit tests
@@ -121,3 +122,4 @@ Keep the app lightweight, usable on small screens and honest about privacy. Avoi
 
 
 New and reset PINs use exactly four digits. Existing 6–12 digit PINs still unlock their original records and backups; change them in Settings → PIN lock → Change PIN. Existing PINs are never truncated.
+
