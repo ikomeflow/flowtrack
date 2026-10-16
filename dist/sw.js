@@ -1,7 +1,7 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v6-20261016-device-unlock';
-const SHELL=['./','index.html','styles-v6.css','theme.js','app-v6.mjs','core.mjs','vault-v5.mjs','device-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'].map(p=>new URL(p,BASE).href);
+const CACHE=PREFIX+'v7-20261016-four-digit-pin';
+const SHELL=['./','index.html','styles-v6.css','theme.js','app-v7.mjs','core.mjs','vault-v6.mjs','device-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'].map(p=>new URL(p,BASE).href);
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting();});
