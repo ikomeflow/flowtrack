@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseAmount,validateTransaction,validateState,validDate,totals,filterTransactions,csvExport,emptyState,shiftMonth,money,CURRENCIES} from '../dist/core.mjs';
+import {parseAmount,validateTransaction,validateState,validDate,totals,filterTransactions,csvExport,emptyState,shiftMonth,money,CURRENCIES} from '../dist/core-v2.mjs';
 const tx=(id,amount,type='expense',date='2026-10-16',description='Lunch',tags=['Food'])=>({id,amount,type,date,description,tags});
 test('money uses exact minor units and rejects invalid or excessive values',()=>{
  assert.equal(parseAmount('0.29'),29);assert.equal(parseAmount('1000.1'),100010);assert.equal(parseAmount(' 01.05 '),105);
@@ -22,6 +22,12 @@ test('real calendar dates and leap years validated without timezone shifts',()=>
  for(const d of ['2024-02-29','2026-01-01','1900-01-01','9999-12-31'])assert.equal(validDate(d),true);
  for(const d of ['2026-02-29','2026-04-31','2026-13-01','2026-10-00','1899-01-01','16/10/2026',null])assert.equal(validDate(d),false);
  assert.equal(shiftMonth('2026-01',-1),'2025-12');assert.equal(shiftMonth('2026-12',1),'2027-01');
+});
+
+test('same-day entries show newest additions first regardless of random IDs',()=>{
+ const rows=[tx('zz-old',100),tx('aa-new',200),tx('backdated',300,'income','2026-10-01')];
+ assert.deepEqual(filterTransactions(rows).map(t=>t.id),['aa-new','zz-old','backdated']);
+ assert.deepEqual(rows.map(t=>t.id),['zz-old','aa-new','backdated']);
 });
 test('backup round trip preserves data and normalizes allowed fields',()=>{
  const original={...emptyState(),transactions:[tx('1',12345,'income','2026-10-16','  Design  ',['Work','Work'])]};
@@ -45,3 +51,4 @@ test('currency changes preserve numeric values, including currencies normally di
  const original={...emptyState(),transactions:[tx('a',10025)]};const changed=validateState({...original,currency:'JPY'});
  assert.equal(changed.transactions[0].amount,10025);assert.ok(money(10025,'JPY').includes('100.25'));assert.ok(Object.keys(CURRENCIES).length>45);
 });
+

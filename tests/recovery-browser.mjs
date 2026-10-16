@@ -1,3 +1,4 @@
+import {clickAdd} from './helpers.mjs';
 import {createRequire} from 'node:module';
 import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
@@ -10,7 +11,7 @@ const origin=process.env.FLOWTRACK_QA_URL||'http://127.0.0.1:4173',output=proces
 const context=await browser.newContext({viewport:{width:1440,height:1080},colorScheme:'dark',acceptDownloads:true}),page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
 let count=0;const check=(ok,label)=>{assert.ok(ok,label);count++;console.log('PASS '+label);};
 const raw=()=>page.evaluate(()=>localStorage.getItem('flowtrack.v1'));
-async function add(description,amount){await page.locator('#add-button').click();await page.locator('#description').fill(description);await page.locator('#amount').fill(amount);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});}
+async function add(description,amount){await clickAdd(page);await page.locator('#description').fill(description);await page.locator('#amount').fill(amount);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});}
 async function setup(){await page.locator('nav a[data-view=settings]').click();if(!await page.locator('#pin-recovery').isVisible())await page.locator('#security-settings summary').click();await page.locator('#pin-recovery').click();await page.locator('#pin-current').fill('8392');await page.locator('#pin-save').click();await page.locator('#save-recovery-dialog').waitFor({state:'visible'});return page.locator('#generated-recovery').inputValue();}
 async function finish(target=page){const key=await target.locator('#generated-recovery').inputValue();await target.locator('#recovery-saved').check();await target.locator('#recovery-finish').click();await target.locator('#save-recovery-dialog').waitFor({state:'hidden'});return key;}
 async function openReset(target=page){if(!await target.locator('#start-pin-reset').isVisible())await target.getByText('Forgot PIN?',{exact:true}).click();await target.locator('#start-pin-reset').click();await target.locator('#reset-pin-dialog').waitFor({state:'visible'});}

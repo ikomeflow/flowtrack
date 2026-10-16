@@ -1,3 +1,4 @@
+import {clickAdd} from './helpers.mjs';
 import {openApp,readLedger,writeLedger} from './helpers.mjs';
 // Optional end-to-end tests: npm install --no-save playwright, then run npm start
 // in another terminal and: node tests/browser.mjs
@@ -15,12 +16,12 @@ const context=await browser.newContext({viewport:{width:1440,height:1080},accept
 const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
 const check=(condition,message)=>{assert.ok(condition,message);passed++;console.log('PASS '+message);};
 async function add(description,amount,type='expense',tags='Food'){
- await page.locator('#add-button').click();await page.locator('#description').fill(description);await page.locator('#amount').fill(amount);await page.locator(`input[name=type][value=${type}]`).check();await page.locator('#transaction-options summary').click();await page.locator('#tags').fill(tags);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});
+ await clickAdd(page);await page.locator('#description').fill(description);await page.locator('#amount').fill(amount);await page.locator(`input[name=type][value=${type}]`).check();await page.locator('#transaction-options summary').click();await page.locator('#tags').fill(tags);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});
 }
 try{
  await page.goto(origin);await openApp(page);await page.waitForSelector('#net-value');
  check(await page.locator('#recent-list').innerText().then(s=>s.includes('No transactions')),'fresh install has honest empty state');
- check(await page.locator('nav a').count()===3,'only Home, History and Settings in primary navigation');check(await page.locator('.charts-grid').count()===0,'home shows balances and entries without charts');await page.locator('#add-button').click();check(await page.locator('#amount').evaluate(el=>el===document.activeElement),'add starts at amount with numeric keyboard');check(await page.locator('#date').inputValue()===new Date().toLocaleDateString('en-CA'),'new transaction defaults to today');check(await page.locator('#tags').isHidden()&&await page.locator('#date').isHidden(),'date and tags are tucked under More options');await page.locator('.close-transaction').first().click();
+ check(await page.locator('nav a').count()===3,'only Home, History and Settings in primary navigation');check(await page.locator('.charts-grid').count()===0,'home shows balances and entries without charts');await clickAdd(page);check(await page.locator('#amount').evaluate(el=>el===document.activeElement),'add starts at amount with numeric keyboard');check(await page.locator('#date').inputValue()===new Date().toLocaleDateString('en-CA'),'new transaction defaults to today');check(await page.locator('#tags').isHidden()&&await page.locator('#date').isHidden(),'date and tags are tucked under More options');await page.locator('.close-transaction').first().click();
  await add('Design payment','1000.29','income','Work');await add('Lunch and bus','200.10','expense','Food, Transport');
  check((await page.locator('#net-value').innerText()).includes('800.19'),'exact dashboard income minus expenses');
  const ledgerBeforeTheme=await page.evaluate(()=>localStorage.getItem('flowtrack.v1'));
@@ -30,7 +31,7 @@ try{
  await page.reload();await openApp(page);
  check(await page.locator('html').getAttribute('data-theme')==='dark','dark preference survives reload');
  check(await page.evaluate(()=>localStorage.getItem('flowtrack.v1'))===ledgerBeforeTheme,'changing theme preserves the complete ledger');
- await page.locator('#add-button').click();
+ await clickAdd(page);
  check(await page.locator('#description').evaluate(el=>getComputedStyle(el).backgroundColor)==='rgb(20, 22, 27)','dark transaction inputs match the theme');
  await page.locator('.close-transaction').first().click();
  await page.getByRole('button',{name:'Switch to light mode',exact:true}).click();

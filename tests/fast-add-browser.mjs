@@ -1,3 +1,4 @@
+import {clickAdd} from './helpers.mjs';
 import {openApp,readLedger,writeLedger} from './helpers.mjs';
 import {createRequire} from 'node:module';
 import assert from 'node:assert/strict';
@@ -8,18 +9,18 @@ const browser=await chromium.launch({headless:true,...(process.env.FLOWTRACK_QA_
 const origin=process.env.FLOWTRACK_QA_URL||'http://127.0.0.1:4173',output=process.env.FLOWTRACK_QA_OUTPUT||'test-results';await mkdir(output,{recursive:true});
 const context=await browser.newContext({viewport:{width:320,height:740},colorScheme:'light'}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
 let count=0;const check=(ok,label)=>{assert.ok(ok,label);count++;console.log('PASS '+label);};
-async function add(amount,type='expense',description=''){await page.locator('#add-button').click();await page.locator('#amount').fill(amount);await page.locator(`input[name=type][value=${type}]`).check();if(description)await page.locator('#description').fill(description);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});}
+async function add(amount,type='expense',description=''){await clickAdd(page);await page.locator('#amount').fill(amount);await page.locator(`input[name=type][value=${type}]`).check();if(description)await page.locator('#description').fill(description);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});}
 async function remove(description){await page.getByRole('button',{name:'Edit '+description,exact:true}).click();await page.locator('#delete-transaction').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});}
 async function undo(){await page.locator('#undo-delete').click();await page.locator('#undo-delete').waitFor({state:'hidden'});}
 async function quota(fail){await page.evaluate(fail=>{if(fail){window.testStorageWrite=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key==='flowtrack.v1')throw new DOMException('Test quota','QuotaExceededError');return window.testStorageWrite.call(this,key,value);};}else Storage.prototype.setItem=window.testStorageWrite;},fail);}
 try{
- await page.goto(origin);await openApp(page);await page.locator('#add-button').click();
+ await page.goto(origin);await openApp(page);await clickAdd(page);
  check(await page.locator('#amount').evaluate(el=>el===document.activeElement),'Add focuses the numeric amount field');
  check(await page.locator('input[name=type][value=expense]').isChecked(),'new entries default to Expense');
  check(await page.locator('#amount').evaluate(el=>!!(el.compareDocumentPosition(document.querySelector('.type-toggle'))&Node.DOCUMENT_POSITION_FOLLOWING)),'amount comes before the type selector');
  check(!await page.locator('#description').getAttribute('required')&&await page.locator('#tags').isHidden(),'description is optional and extra fields stay collapsed');
  check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'fast Add fits a 320px phone');await page.screenshot({path:join(output,'fast-add-mobile-light.png'),fullPage:true});
- await page.locator('.close-transaction').first().click();await page.getByRole('button',{name:'Switch to dark mode',exact:true}).click();await page.locator('#add-button').click();await page.screenshot({path:join(output,'fast-add-mobile-dark.png'),fullPage:true});
+ await page.locator('.close-transaction').first().click();await page.getByRole('button',{name:'Switch to dark mode',exact:true}).click();await clickAdd(page);await page.screenshot({path:join(output,'fast-add-mobile-dark.png'),fullPage:true});
  await page.locator('#amount').fill('12.34');await page.evaluate(()=>{document.querySelector('#transaction-form').requestSubmit();document.querySelector('#transaction-form').requestSubmit();});await page.locator('#transaction-dialog').waitFor({state:'hidden'});let ledger=await readLedger(page),expense=ledger.transactions[0];
  check(ledger.transactions.length===1&&expense.description==='Expense'&&expense.amount===1234,'amount-only Save creates exactly one labeled entry even on rapid submission');
  check(expense.date===new Date().toLocaleDateString('en-CA')&&(await page.locator('#net-value').innerText()).includes('12.34'),'today and monthly totals update immediately');

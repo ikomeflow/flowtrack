@@ -9,3 +9,5 @@ export async function openApp(page,pin=TEST_PIN){
 }
 export async function readLedger(page,pin=TEST_PIN){const raw=await page.evaluate(()=>localStorage.getItem('flowtrack.v1'));const vault=new LedgerVault({getItem:()=>raw});const value=vault.load();return vault.enabled?await vault.unlock(pin):value||{version:1,currency:'XAF',transactions:[]};}
 export async function writeLedger(page,value,pin=TEST_PIN){const map=new Map([['flowtrack.v1',await page.evaluate(()=>localStorage.getItem('flowtrack.v1'))]]),vault=new LedgerVault({getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v)});vault.load();if(vault.enabled)await vault.unlock(pin);await vault.save(value);await page.evaluate(raw=>localStorage.setItem('flowtrack.v1',raw),map.get('flowtrack.v1'));}
+
+export async function clickAdd(page){if(await page.locator('#mobile-add').isVisible())await page.locator('#mobile-add').click();else await page.locator('#add-button').click();}

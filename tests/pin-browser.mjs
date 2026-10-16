@@ -1,3 +1,4 @@
+import {clickAdd} from './helpers.mjs';
 import {createRequire} from 'node:module';
 import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
@@ -17,7 +18,7 @@ async function configure(pin,mode='enable',current=''){
  await page.locator('#pin-save').click();
  await page.waitForFunction(()=>!document.getElementById('pin-dialog').open||document.getElementById('pin-error').textContent);
 }
-async function add(description,amount){await page.locator('#add-button').click();await page.locator('#description').fill(description);await page.locator('#amount').fill(amount);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});}
+async function add(description,amount){await clickAdd(page);await page.locator('#description').fill(description);await page.locator('#amount').fill(amount);await page.locator('#save-button').click();await page.locator('#transaction-dialog').waitFor({state:'hidden'});}
 try{
  const legacy={version:1,currency:'XAF',transactions:[{id:'private',description:'Private groceries',amount:12345,type:'expense',date:new Date().toLocaleDateString('en-CA'),tags:[]}]};await page.addInitScript(value=>{if(!localStorage.getItem('flowtrack.test-seeded')){localStorage.setItem('flowtrack.v1',JSON.stringify(value));localStorage.setItem('flowtrack.test-seeded','1');}},legacy);await page.goto(origin);await page.locator('#setup-screen').waitFor({state:'visible'});check(await page.locator('#app-shell').isHidden()&&await page.locator('#setup-existing').isVisible(),'existing plaintext records stay behind required PIN setup without being deleted');const original=await raw();
  await page.locator('#setup-pin').click();await page.locator('#pin-new').fill('8392');await page.locator('#pin-confirm').fill('8393');await page.locator('#pin-save').click();check((await page.locator('#pin-error').innerText()).includes('do not match')&&await raw()===original,'mismatched PIN confirmation cannot encrypt or change records');await page.locator('#pin-cancel').click();
