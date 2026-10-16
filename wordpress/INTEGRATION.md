@@ -35,7 +35,7 @@ The existing apex, www, FTP and verification records were retained. No nameserve
 
 Edit the **FlowTrack** page under Pages. Its page ID is 337. The page uses a Custom HTML block with styling copied from the homepage; it needs no new plugin. `flowtrack-page.html` is a portable copy of the markup. The homepage is page ID 5; `homepage-flowtrack-card.html` contains the new carousel card. Its carousel has nine slides and nine controls after this update.
 
-The screenshot is attachment 339, with alt text and a demo caption. It is stored at https://ikomeflow.com/wp-content/uploads/2026/10/flowtrack-desktop.png.
+The current screenshot is attachment 347, with alt text and a demo caption. It shows the minimal version 1.4 Home screen with sample data and is stored at https://ikomeflow.com/wp-content/uploads/2026/10/flowtrack-minimal-desktop.png. The earlier attachment 339 is retained.
 
 Keep the launch button pointing to the canonical HTTPS app address. Use JSON backup/restore when moving a ledger between addresses or browser profiles. The portfolio page's privacy text describes the FlowTrack app; the surrounding WordPress website may have its own hosting, analytics or plugins.
 
@@ -57,3 +57,4 @@ No GitHub credential, WordPress password, financial records or Cloudflare secret
 - The deployed demo dashboard calculated XAF 609,700.00 net; leaving demo mode restored the empty personal ledger.
 - The deployed app's Settings confirmed that offline app files were ready on this device.
 - Earlier local testing passed 43 browser assertions at both the root and a GitHub Pages-style subpath, including mobile layouts, CRUD, backup/restore and offline reloads.
+
