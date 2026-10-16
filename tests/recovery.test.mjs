@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {LedgerVault} from '../dist/vault-v4.mjs';
+import {LedgerVault} from '../dist/vault-v5.mjs';
 import {LedgerVault as LegacyVault} from '../dist/vault-v3.mjs';
 import {STORAGE_KEY} from '../dist/core.mjs';
 const ledger={version:1,currency:'NGN',transactions:[{id:'first',description:'Recovery test entry',amount:78901,type:'income',date:'2026-10-16',tags:['Work']}]};
