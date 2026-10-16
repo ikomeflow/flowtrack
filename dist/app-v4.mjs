@@ -1,0 +1,245 @@
+import {LedgerVault,isVault,validateVault} from './vault-v4.mjs';
+import { STORAGE_KEY,CURRENCIES,today,parseAmount,validateTransaction,validateState,emptyState,totals,filterTransactions,money,shiftMonth,csvExport } from './core.mjs';
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const paths={lock:'M6 10h12v11H6zM8 10V6a4 4 0 0 1 8 0v4',grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',arrows:'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4',calendar:'M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z',shield:'M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7z M8 12l3 3 5-6',plus:'M12 5v14M5 12h14',left:'m14 6-6 6 6 6',right:'m10 6 6 6-6 6',down:'M17 7 7 17M7 7v10h10',up:'M7 17 17 7M7 7h10v10',wallet:'M3 6h16v14H3zM3 6V3h13v3M15 11h6v5h-6z',help:'M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20',pie:'M11 3v10h10A10 10 0 1 1 11 3zM15 2v7h7a9 9 0 0 0-7-7',search:'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14M15 15l6 6',download:'M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5',close:'m6 6 12 12M18 6 6 18',edit:'m15 4 5 5M4 20l4-1L21 6l-4-4L4 15z',trash:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7'};
+const icon=name=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.wallet}"/></svg>`;
+function icons(){ $$('[data-icon]').forEach(el=>{el.innerHTML=icon(el.dataset.icon);}); }
+let data=emptyState(),demo=null,corrupt=false,storageUnavailable=false,recoveryRaw='',month=today().slice(0,7),selectedDate=today(),editingId=null,toastTimer,installPrompt,confirmResolve;
+const state=()=>demo||data;
+const fmt=n=>money(n,state().currency);
+function notify(message){$('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,4500);}
+const vault=new LedgerVault({getItem:key=>localStorage.getItem(key),setItem:(key,value)=>localStorage.setItem(key,value),removeItem:key=>localStorage.removeItem(key)});
+let saving=false,lockRequested=false,pendingReload=false,lastActivity=Date.now(),pinMode='enable',pendingRecovery=null,unlockFailures=0,booted=false;
+function load(){
+  corrupt=false;storageUnavailable=false;recoveryRaw='';data=emptyState();
+  try{const value=vault.load();if(value)data=value;}
+  catch(e){if(e instanceof SyntaxError||vault.raw!==null){corrupt=true;recoveryRaw=vault.raw||'';}else storageUnavailable=true;}
+  try{const test='flowtrack.storage-check';localStorage.setItem(test,'1');localStorage.removeItem(test);}catch{storageUnavailable=true;}
+  updateStorageNotice();
+}
+function updateStorageNotice(){
+ const alert=$('#storage-alert');alert.hidden=!corrupt&&!storageUnavailable;
+ alert.textContent=corrupt?'Your saved ledger could not be read. It has been preserved. New entries are blocked to protect it. In Settings, download the original data, then restore a valid backup or clear it deliberately.':storageUnavailable?'Browser storage is unavailable. Changes will only last for this open session. Download a JSON backup before closing this page.':'';
+ $('#recovery-button').hidden=!corrupt;$('#add-button').disabled=corrupt&&!demo;
+}
+async function commit(next){
+ if(saving||vault.locked){notify('Wait for saving to finish, or unlock FlowTrack.');return false;}
+ saving=true;
+ try{next=validateState(next);if(demo){demo=next;render();return true;}if(corrupt)throw Error('Saved data is unreadable. Recover it from Settings before making changes.');
+   if(!storageUnavailable||vault.enabled){try{await vault.save(next);}catch(e){throw Error('Could not save. Your change was not applied. '+e.message);}}
+   data=next;render();return true;
+ }catch(e){notify(e.message);return false;}
+ finally{finishSaving();}
+}
+function confirmAction(title,message,label='Continue',danger=false){
+ $('#confirm-title').textContent=title;$('#confirm-message').textContent=message;$('#confirm-ok').textContent=label;$('#confirm-ok').className=`button ${danger?'danger':'primary'}`;
+ $('#confirm-dialog').showModal();$('#confirm-cancel').focus();return new Promise(resolve=>confirmResolve=resolve);
+}
+function finishConfirm(value){$('#confirm-dialog').close();confirmResolve?.(value);confirmResolve=null;}
+$('#confirm-ok').addEventListener('click',()=>finishConfirm(true));$('#confirm-cancel').addEventListener('click',()=>finishConfirm(false));$('#confirm-close').addEventListener('click',()=>finishConfirm(false));$('#confirm-dialog').addEventListener('cancel',e=>{e.preventDefault();finishConfirm(false);});
+function dateLabel(date,opts={day:'numeric',month:'short'}){return new Date(date+'T12:00:00').toLocaleDateString(undefined,opts);}
+function monthLabel(m,opts={month:'short'}){return dateLabel(m+'-01',opts);}
+function empty(title,message,add=false){return `<div class="empty"><span class="empty-icon">${icon('arrows')}</span><h3>${escape(title)}</h3><p>${escape(message)}</p>${add?'<button class="button primary" data-add>Add transaction</button>':''}</div>`;}
+function table(rows,emptyText='No transactions yet',add=false){
+ if(!rows.length)return empty(emptyText,add?'Add your first entry.':'Change the date or filters.',add);
+ return `<div class="table-wrap"><table><thead><tr><th scope="col">Transaction</th><th class="date-cell" scope="col">Date</th><th class="tag-column" scope="col">Tags</th><th scope="col" class="amount-cell">Amount</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows.map(t=>`<tr><td><div class="description-cell"><span class="transaction-icon ${t.type}">${icon(t.type==='income'?'down':'up')}</span><div><div class="transaction-description">${escape(t.description)}</div><span class="mobile-date">${escape(dateLabel(t.date))} · ${t.type==='income'?'Income':'Expense'}</span></div></div></td><td class="date-cell">${escape(dateLabel(t.date))}</td><td class="tag-column">${t.tags.length?t.tags.map(x=>`<span class="tag">${escape(x)}</span>`).join(''):'<span class="muted">—</span>'}</td><td class="amount-cell ${t.type==='income'?'positive':''}"><span class="sr-only">${t.type} </span>${t.type==='income'?'+':'−'}${escape(fmt(t.amount))}</td><td class="actions-cell"><button class="icon-button" data-edit="${escape(t.id)}" aria-label="Edit ${escape(t.description)}">${icon('edit')}</button><button class="icon-button" data-delete="${escape(t.id)}" aria-label="Delete ${escape(t.description)}">${icon('trash')}</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+function overview(){
+ const rows=filterTransactions(state().transactions,{month}),sum=totals(rows);
+ $('#net-value').textContent=fmt(sum.net);$('#income-value').textContent=fmt(sum.income);$('#expense-value').textContent=fmt(sum.expense);
+ $('#recent-list').innerHTML=table(rows.slice(0,5),'No transactions',!rows.length);
+ const history=Array.from({length:6},(_,i)=>{const m=shiftMonth(month,i-5);return {month:m,...totals(filterTransactions(state().transactions,{month:m}))};});
+ const max=Math.max(...history.flatMap(x=>[x.income,x.expense]),10000);
+ const short=n=>new Intl.NumberFormat(undefined,{notation:'compact',maximumFractionDigits:1}).format(n/100);
+ $('#cash-chart').innerHTML=`<div class="chart-grid"><div class="chart-y">${[1,.75,.5,.25,0].map(n=>`<span>${short(max*n)}</span>`).join('')}</div><div class="bars" role="img" aria-label="${escape(history.map(x=>`${monthLabel(x.month,{month:'long',year:'numeric'})}: income ${fmt(x.income)}, expenses ${fmt(x.expense)}`).join('. '))}">${history.map(x=>`<div class="bar-group" title="${escape(monthLabel(x.month,{month:'long',year:'numeric'})+': income '+fmt(x.income)+', expenses '+fmt(x.expense))}"><div class="bar" style="height:${x.income/max*100}%"></div><div class="bar expense-bar" style="height:${x.expense/max*100}%"></div><span class="bar-label">${escape(monthLabel(x.month))}</span></div>`).join('')}</div></div><div class="chart-foot"><span>${escape(state().currency)} · Last 6 months</span></div>`;
+ const categories=new Map();for(const t of rows.filter(x=>x.type==='expense')){const tag=t.tags[0]||'Untagged';categories.set(tag,(categories.get(tag)||0)+t.amount);}
+ let tags=[...categories].sort((a,b)=>b[1]-a[1]);if(tags.length>4)tags=[...tags.slice(0,3),['Other tags',tags.slice(3).reduce((a,t)=>a+t[1],0)]];
+ $('#spending-chart').innerHTML=tags.length?`<div class="spending-body"><div class="spending-total"><strong>${escape(fmt(sum.expense))}</strong><span>${categories.size} ${categories.size===1?'category':'categories'}</span></div>${tags.map(([tag,amount])=>`<div class="tag-row"><div class="tag-label"><span>${escape(tag)}</span><b>${escape(fmt(amount))} · ${Math.round(amount/sum.expense*100)}%</b></div><div class="tag-track"><div class="tag-fill" style="width:${amount/sum.expense*100}%"></div></div></div>`).join('')}</div>`:`<div class="empty empty-spending"><span class="empty-icon">${icon('pie')}</span><h3>No expenses</h3><p>Spending appears here.</p></div>`;
+}
+function filtered(){return filterTransactions(state().transactions,{month:$('#period-filter').value==='month'?month:'',query:$('#search').value,type:$('#type-filter').value});}
+function history(){const rows=filtered();$('#result-count').textContent=`${rows.length} ${rows.length===1?'transaction':'transactions'} · Net ${fmt(totals(rows).net)}`;$('#transaction-list').innerHTML=table(rows,'No matching transactions');$('#history-month').disabled=$('#period-filter').value==='all';}
+function calendar(){
+ const [y,m]=month.split('-').map(Number),first=new Date(y,m-1,1).getDay(),days=new Date(y,m,0).getDate();
+ let html=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="weekday">${d}</div>`).join('')+'<div aria-hidden="true"></div>'.repeat(first);
+ const rows=filterTransactions(state().transactions,{month});
+ for(let day=1;day<=days;day++){const date=`${month}-${String(day).padStart(2,'0')}`,entries=rows.filter(t=>t.date===date),s=totals(entries);html+=`<button class="day ${date===today()?'today':''} ${date===selectedDate?'selected':''}" data-date="${date}" aria-pressed="${date===selectedDate}" aria-label="${escape(dateLabel(date,{dateStyle:'full'}))}, ${entries.length} transactions, income ${escape(fmt(s.income))}, expenses ${escape(fmt(s.expense))}"><span>${day}</span>${entries.length?`<span class="day-count">${entries.length} ${entries.length===1?'entry':'entries'}</span>`:''}<span class="day-dots">${entries.some(t=>t.type==='income')?'<i class="income-dot"></i>':''}${entries.some(t=>t.type==='expense')?'<i class="expense-dot"></i>':''}</span></button>`;}
+ $('#calendar-grid').innerHTML=html;const dayRows=filterTransactions(rows,{date:selectedDate}),sum=totals(dayRows);
+ $('#day-title').textContent=dateLabel(selectedDate,{day:'numeric',month:'long',year:'numeric'});$('#day-summary').textContent=`${dayRows.length} ${dayRows.length===1?'entry':'entries'} · Net ${fmt(sum.net)}`;
+ $('#day-list').innerHTML=table(dayRows,'No entries on this day');
+}
+function render(){
+ for(const id of ['overview-month','history-month','calendar-month'])$('#'+id).value=month;
+ $('#currency').value=state().currency;securityStatus();$('#demo-banner').hidden=!demo;$('#demo-button').hidden=!!demo;updateStorageNotice();overview();history();calendar();route(false);
+}
+function setMonth(value){if(!/^\d{4}-\d{2}$/.test(value)||value<'1900-01'||value>'9999-12')return;month=value;if(!selectedDate.startsWith(month))selectedDate=month===today().slice(0,7)?today():month+'-01';render();}
+for(const id of ['overview-month','history-month','calendar-month'])$('#'+id).addEventListener('change',e=>setMonth(e.target.value));
+$$('.prev-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(month,-1))));$$('.next-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(month,1))));
+const views={overview:'Overview',transactions:'Transactions',calendar:'Calendar',settings:'Settings'};
+function route(focus=true){const view=Object.hasOwn(views,location.hash.slice(1))?location.hash.slice(1):'overview';$$('.view').forEach(v=>v.hidden=v.id!==view+'-view');$$('nav a').forEach(a=>{a.classList.toggle('active',a.dataset.view===view);if(a.dataset.view===view)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#page-title').textContent=views[view];$('#breadcrumb').textContent=views[view];$('#add-button').hidden=view==='settings';if(focus)$('#main').focus({preventScroll:true});}
+window.addEventListener('hashchange',()=>route());
+$('#help-button').addEventListener('click',()=>{location.hash='settings';});
+function openTransaction(id=null,date=null){
+ if(vault.locked||$('#app-shell').hidden)return;if(corrupt&&!demo){notify('Recover your saved data from Settings first.');return;}
+ const t=id?state().transactions.find(x=>x.id===id):null;editingId=t?.id||null;$('#transaction-form').reset();$('#transaction-title').textContent=t?'Edit transaction':'Add transaction';$('#save-button').textContent=t?'Save changes':'Save transaction';$('#description').value=t?.description||'';$('#amount').value=t?(t.amount/100).toFixed(2):'';$('#date').value=t?.date||date||(month===today().slice(0,7)?today():month+'-01');$('#tags').value=t?.tags.join(', ')||'';$('#amount-currency').textContent=state().currency;$('#form-error').textContent='';$(`input[name=type][value=${t?.type||'expense'}]`).checked=true;$('#transaction-dialog').showModal();$('#description').focus();
+}
+$('#add-button').addEventListener('click',()=>openTransaction());$('#add-day').addEventListener('click',()=>openTransaction(null,selectedDate));$$('.close-transaction').forEach(b=>b.addEventListener('click',()=>$('#transaction-dialog').close()));
+$('#transaction-form').addEventListener('submit',async e=>{
+ e.preventDefault();try{const t=validateTransaction({id:editingId||crypto.randomUUID(),description:$('#description').value.trim(),amount:parseAmount($('#amount').value),date:$('#date').value,type:$('input[name=type]:checked').value,tags:$('#tags').value.split(',').map(s=>s.trim()).filter(Boolean)});
+ const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){setMonth(t.date.slice(0,7));selectedDate=t.date;calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Back up before closing.':'Transaction saved on this device.');}}
+ catch(err){$('#form-error').textContent=err.message;}
+});
+document.addEventListener('click',async e=>{
+ const add=e.target.closest('[data-add]');if(add)openTransaction();
+ const edit=e.target.closest('[data-edit]');if(edit)openTransaction(edit.dataset.edit);
+ const del=e.target.closest('[data-delete]');if(del){const t=state().transactions.find(x=>x.id===del.dataset.delete);if(t&&await confirmAction('Delete transaction?',`“${t.description}” (${fmt(t.amount)}) will be removed from this ledger. This cannot be undone.`,'Delete transaction',true)){if(await commit({...state(),transactions:state().transactions.filter(x=>x.id!==t.id)}))notify('Transaction deleted.');}}
+ const day=e.target.closest('[data-date]');if(day){selectedDate=day.dataset.date;calendar();$(`[data-date="${selectedDate}"]`)?.focus();}
+});
+$('#search').addEventListener('input',history);$('#type-filter').addEventListener('change',history);$('#period-filter').addEventListener('change',history);
+function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function exportCSV(rows){download(csvExport(rows,state().currency),`flowtrack${demo?'-demo':''}-${today()}.csv`,'text/csv;charset=utf-8');notify(`Exported ${rows.length} transactions. Keep this file private.`);}
+$('#export-all').addEventListener('click',()=>exportCSV(state().transactions));$('#export-filtered').addEventListener('click',()=>exportCSV(filtered()));
+$('#backup-button').addEventListener('click',()=>{if(corrupt&&!demo){notify('Download the unreadable original using the recovery link first.');return;}download(JSON.stringify(state(),null,2),`flowtrack${demo?'-demo':''}-backup-${today()}.json`,'application/json');notify('Backup downloaded. Keep it somewhere safe and private.');});
+$('#recovery-button').addEventListener('click',()=>download(recoveryRaw,`flowtrack-recovery-${today()}.txt`,'text/plain'));
+$('#restore-button').addEventListener('click',()=>$('#restore-file').click());
+$('#restore-file').addEventListener('change',async e=>{
+ const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{if(f.size>32*1024*1024)throw Error('Backup is too large (32 MB maximum).');if(saving)throw Error('Wait for the current save to finish.');
+ const parsed=JSON.parse(await f.text());
+ if(isVault(parsed)){
+   const incoming=validateVault(parsed);if(demo)throw Error('Leave demo mode before restoring a locked copy.');
+   if(await confirmAction('Restore locked copy?','This replaces this browser’s ledger. You will need the PIN that protected this copy. Back up current records first.','Restore locked copy')){vault.replaceLocked(incoming);lockApp(false);}return;
+ }
+ const incoming=validateState(parsed);
+ if(await confirmAction('Replace this ledger?',`Restore ${incoming.transactions.length} transactions in ${incoming.currency}? This replaces ${demo?'the demo ledger':'all current records in this browser'}. Back up first.`,'Restore backup')){
+   if(demo){demo=incoming;render();notify('Backup loaded into demo mode only.');return;}
+   saving=true;try{await vault.save(incoming);data=incoming;corrupt=false;storageUnavailable=false;recoveryRaw='';render();notify('Backup restored.');}finally{finishSaving();}
+ }
+ }catch(err){notify('Restore failed: '+err.message);}
+});
+$('#clear-button').addEventListener('click',async()=>{if(saving){notify('Wait for saving to finish.');return;}if(await confirmAction('Clear all data?',`Permanently erase ${demo?'the demo ledger':'this browser’s ledger, currency and PIN'}? Download a JSON backup first. This cannot be undone.`,'Clear all data',true)){if(demo){demo=emptyState();render();notify('Demo ledger cleared.');return;}try{vault.clear();data=emptyState();corrupt=false;recoveryRaw='';render();notify('All local records cleared.');}catch{notify('Could not clear browser storage.');}}});
+$('#currency').innerHTML=Object.entries(CURRENCIES).map(([code,name])=>`<option value="${code}">${code} — ${name}</option>`).join('');
+$('#currency').addEventListener('change',async e=>{const next=e.target.value,previous=state().currency;e.target.value=previous;if(next===previous)return;if(state().transactions.length&&!await confirmAction('Change display currency?',`All existing ${previous} amounts will be relabeled as ${next}, with no exchange-rate conversion. For example, 1,000 ${previous} becomes 1,000 ${next}. Only continue if your ledger uses this currency.`,'Change currency'))return;if(await commit({...state(),currency:next}))notify(`Display currency changed to ${next}. No conversion applied.`);});
+$('#demo-button').addEventListener('click',()=>{
+ const templates=[['Freelance design','income',180000,'Work',2],['Groceries','expense',24500,'Food',4],['Monthly salary','income',320000,'Salary',5],['Ride to work','expense',3500,'Transport',8],['Weekend lunch','expense',8500,'Food',12],['Mobile data','expense',6000,'Essentials',14],['Online course','expense',15000,'Learning',16],['Side project','income',45000,'Work',20],['Weekly shopping','expense',18500,'Food',22]];
+ demo={version:1,currency:'XAF',transactions:[]};for(let i=-5;i<=0;i++){const m=shiftMonth(month,i);templates.forEach(([description,type,amount,tag,day],j)=>demo.transactions.push({id:`demo-${i}-${j}`,description,type,amount:Math.round(amount*(1+(i+5)*.06))*100,date:`${m}-${String(day).padStart(2,'0')}`,tags:[tag]}));}render();notify('Exploring sample data. Your saved records are untouched.');
+});
+$('#exit-demo').addEventListener('click',()=>{demo=null;render();notify('Back to your own ledger.');});
+function storageChanged(){
+ clearRecoveryDraft();const wasProtected=vault.enabled;load();$('#transaction-dialog').close();$('#pin-dialog').close();$('#pin-form').reset();demo=null;
+ if(vault.locked)lockApp(false);else{showApp();render();notify(wasProtected?'PIN or ledger changed in another tab.':'Ledger updated from another tab.');}
+}
+function finishSaving(){
+ saving=false;
+ if(pendingReload){pendingReload=false;lockRequested=false;storageChanged();}
+ else if(lockRequested){lockRequested=false;lockApp();}
+}
+window.addEventListener('storage',e=>{
+ if(e.key==='flowtrack.lock'&&vault.enabled){lockApp(false);return;}
+ if(e.key===STORAGE_KEY||e.key===null){
+   if(saving){pendingReload=true;return;}
+   storageChanged();
+ }
+});
+function connection(){ $('#connection').innerHTML=`<span></span>${navigator.onLine?'Local':'Offline'}`; }
+window.addEventListener('online',connection);window.addEventListener('offline',connection);
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('#install-button').hidden=false;});
+$('#install-button').addEventListener('click',async()=>{if(!installPrompt)return;await installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('#install-button').hidden=true;});
+window.addEventListener('appinstalled',()=>{$('#install-button').hidden=true;notify('FlowTrack installed. Your records remain on this device.');});
+function securityStatus(){
+ const enabled=vault.enabled;$('#lock-button').hidden=!enabled;
+ $('#pin-enable').hidden=enabled;$('#pin-change').hidden=!enabled;$('#pin-disable').hidden=!enabled;
+ $('#pin-status').textContent=enabled?'On · locks after 5 minutes idle':'Off';
+ $('#pin-recovery').hidden=!enabled;$('#pin-recovery').textContent=vault.hasRecovery?'Replace recovery key':'Set up recovery';$('#recovery-status').hidden=!enabled;$('#recovery-status').textContent=vault.hasRecovery?'Recovery key ready.':'Recovery not set up.';$('#start-pin-reset').disabled=!vault.hasRecovery;$('#recovery-gate-hint').textContent=vault.hasRecovery?'Use your saved recovery key to reset the PIN and keep your records.':'Recovery was not set up for this ledger. Unlock with your PIN to add it, or use a separate JSON backup.';
+ for(const id of ['pin-enable','pin-change','pin-disable','pin-recovery'])$('#'+id).disabled=!!demo||corrupt||storageUnavailable||!globalThis.crypto?.subtle;
+}
+function showApp(){
+ $('#lock-screen').hidden=true;$('#app-shell').hidden=false;$('#app-shell').inert=false;lastActivity=Date.now();
+}
+function lockApp(broadcast=true){
+ if(!vault.enabled)return;
+ if(saving){lockRequested=true;return;}
+ clearRecoveryDraft();vault.lock();data=emptyState();demo=null;editingId=null;$('#transaction-form').reset();$('#pin-form').reset();$('#reset-pin-form').reset();$('#search').value='';
+ for(const dialog of $$('dialog'))if(dialog.open)dialog.close();if(confirmResolve){confirmResolve(false);confirmResolve=null;}
+ $('#toast').hidden=true;render();$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#lock-screen').hidden=false;$('#unlock-pin').value='';$('#unlock-error').textContent='';
+ if(broadcast)try{localStorage.setItem('flowtrack.lock',crypto.randomUUID());}catch{}
+ if(!document.hidden)$('#unlock-pin').focus();
+}
+$('#lock-button').addEventListener('click',()=>lockApp());
+$('#unlock-form').addEventListener('submit',async e=>{
+ e.preventDefault();const button=$('#unlock-button');if(button.disabled)return;button.disabled=true;$('#unlock-error').textContent='';
+ try{data=await vault.unlock($('#unlock-pin').value);$('#unlock-pin').value='';unlockFailures=0;corrupt=false;render();showApp();$('#main').focus({preventScroll:true});}
+ catch(err){$('#unlock-pin').value='';$('#unlock-error').textContent=err.message;unlockFailures++;await new Promise(r=>setTimeout(r,Math.min(30000,1000*2**Math.min(unlockFailures-1,5))));}
+ finally{button.disabled=false;}
+});
+function openPin(mode){
+ if(demo||corrupt||storageUnavailable||saving)return;pinMode=mode;$('#pin-form').reset();$('#pin-error').textContent='';
+ const label=mode==='enable'?'Set PIN':mode==='change'?'Change PIN':mode==='recovery'?(vault.hasRecovery?'Replace recovery key':'Set up recovery'):'Turn off PIN';$('#pin-title').textContent=label;$('#pin-save').textContent=label;
+ $('#pin-current-group').hidden=mode==='enable';$('#pin-current').disabled=mode==='enable';
+ const needsNewPin=mode==='enable'||mode==='change';$('#pin-new-group').hidden=!needsNewPin;for(const id of ['pin-new','pin-confirm','pin-ack'])$('#'+id).disabled=!needsNewPin;
+ $('#pin-dialog').showModal();$(mode==='enable'?'#pin-new':'#pin-current').focus();
+}
+$('#pin-enable').addEventListener('click',()=>openPin('enable'));$('#pin-change').addEventListener('click',()=>openPin('change'));$('#pin-disable').addEventListener('click',()=>openPin('disable'));$('#pin-recovery').addEventListener('click',()=>openPin('recovery'));
+function closePin(){if(!saving){$('#pin-dialog').close();$('#pin-form').reset();}}
+$('#pin-close').addEventListener('click',closePin);$('#pin-cancel').addEventListener('click',closePin);$('#pin-dialog').addEventListener('cancel',e=>{e.preventDefault();closePin();});
+$('#pin-form').addEventListener('submit',async e=>{
+ e.preventDefault();if(saving)return;$('#pin-error').textContent='';
+ if(['enable','change'].includes(pinMode)&&$('#pin-new').value!==$('#pin-confirm').value){$('#pin-error').textContent='PINs do not match.';return;}
+ saving=true;$('#pin-save').disabled=true;
+ try{
+  if(pinMode==='disable'){data=await vault.removePin($('#pin-current').value);$('#pin-dialog').close();$('#pin-form').reset();render();notify('PIN turned off. Local records are no longer encrypted.');}
+  else{const draft=pinMode==='recovery'?await vault.prepareRecovery($('#pin-current').value):await vault.preparePin($('#pin-new').value,data,pinMode==='change'?$('#pin-current').value:undefined);$('#pin-dialog').close();$('#pin-form').reset();offerRecovery(draft);}
+  lastActivity=Date.now();
+ }catch(err){$('#pin-error').textContent=err.message;}
+ finally{$('#pin-save').disabled=false;finishSaving();}
+});
+function clearRecoveryDraft(){
+ vault.discardPrepared(pendingRecovery);pendingRecovery=null;$('#generated-recovery').value='';$('#recovery-saved').checked=false;
+ if($('#save-recovery-dialog').open)$('#save-recovery-dialog').close();
+}
+function offerRecovery(draft){
+ if(!draft.recoveryKey)throw Error('Recovery setup failed. Your PIN and records are unchanged.');
+ clearRecoveryDraft();pendingRecovery=draft;$('#generated-recovery').value=draft.recoveryKey;$('#recovery-save-error').textContent='';$('#recovery-saved').checked=false;$('#save-recovery-dialog').showModal();$('#download-recovery').focus();lastActivity=Date.now();
+}
+function cancelRecovery(){if(saving)return;clearRecoveryDraft();notify('Setup cancelled. Your previous PIN and records are unchanged.');}
+$('#recovery-close').addEventListener('click',cancelRecovery);$('#recovery-cancel').addEventListener('click',cancelRecovery);$('#save-recovery-dialog').addEventListener('cancel',e=>{e.preventDefault();cancelRecovery();});
+$('#download-recovery').addEventListener('click',()=>{if(pendingRecovery)download(`FlowTrack recovery key\n\n${pendingRecovery.recoveryKey}\n\nKeep this key private and separate from this device. Anyone with it can reset your PIN and access the matching locked ledger. Older locked copies keep their own keys.\n`,`flowtrack-recovery-key-${today()}.txt`,'text/plain');});
+$('#copy-recovery').addEventListener('click',async()=>{if(!pendingRecovery)return;try{await navigator.clipboard.writeText(pendingRecovery.recoveryKey);$('#recovery-save-error').textContent='Copied. Keep it somewhere private.';}catch{$('#generated-recovery').select();$('#recovery-save-error').textContent='Select and copy the key, or download it.';}});
+$('#recovery-finish').addEventListener('click',()=>{
+ if(saving||!pendingRecovery)return;if(!$('#recovery-saved').reportValidity())return;saving=true;
+ try{data=vault.commitPrepared(pendingRecovery);clearRecoveryDraft();$('#reset-pin-form').reset();corrupt=false;storageUnavailable=false;render();showApp();notify('PIN saved. Your records are intact. Keep your recovery key safe.');}
+ catch(err){$('#recovery-save-error').textContent=err.message;}
+ finally{finishSaving();}
+});
+function closeResetPin(){if(saving)return;$('#reset-pin-dialog').close();$('#reset-pin-form').reset();}
+$('#reset-pin-close').addEventListener('click',closeResetPin);$('#reset-pin-cancel').addEventListener('click',closeResetPin);$('#reset-pin-dialog').addEventListener('cancel',e=>{e.preventDefault();closeResetPin();});
+$('#start-pin-reset').addEventListener('click',()=>{if(!vault.hasRecovery)return;$('#reset-pin-form').reset();$('#reset-pin-error').textContent='';$('#reset-pin-dialog').showModal();$('#reset-recovery-key').focus();});
+$('#reset-pin-form').addEventListener('submit',async e=>{
+ e.preventDefault();if(saving)return;$('#reset-pin-error').textContent='';if($('#reset-new-pin').value!==$('#reset-confirm-pin').value){$('#reset-pin-error').textContent='PINs do not match.';return;}saving=true;$('#reset-pin-submit').disabled=true;
+ try{const draft=await vault.prepareReset($('#reset-recovery-key').value,$('#reset-new-pin').value);$('#reset-pin-dialog').close();$('#reset-pin-form').reset();offerRecovery(draft);}
+ catch(err){$('#reset-pin-error').textContent=err.message;}
+ finally{$('#reset-pin-submit').disabled=false;finishSaving();}
+});
+
+$('#download-locked').addEventListener('click',()=>{if(vault.raw)download(vault.raw,`flowtrack-locked-${today()}.json`,'application/json');});
+$('#reset-locked').addEventListener('click',async()=>{
+ if(await confirmAction('Reset this device?','This permanently erases the locked ledger and PIN. Save a locked copy first if you may remember the PIN later. You can restore a separate JSON backup after resetting.','Erase locked ledger',true)){
+  try{vault.clear();load();render();showApp();notify('Device reset. Restore your JSON backup from Settings.');}catch(err){$('#unlock-error').textContent='Could not reset: '+err.message;}
+ }
+});
+const IDLE_MS=5*60*1000;
+function checkIdle(){if(booted&&(pendingRecovery||(vault.enabled&&!vault.locked))&&Date.now()-lastActivity>=IDLE_MS){clearRecoveryDraft();if(vault.enabled)lockApp();}}
+function activity(){checkIdle();lastActivity=Date.now();}
+for(const event of ['pointerdown','keydown','touchstart','scroll'])document.addEventListener(event,activity,{passive:true,capture:true});
+document.addEventListener('visibilitychange',checkIdle);window.addEventListener('pagehide',()=>{clearRecoveryDraft();$('#pin-form').reset();$('#reset-pin-form').reset();if(vault.enabled)lockApp(false);});setInterval(checkIdle,1000);
+
+load();icons();render();connection();booted=true;if(vault.locked)lockApp(false);else showApp();
+if('serviceWorker' in navigator&&window.isSecureContext){
+ navigator.serviceWorker.register('./sw.js').then(reg=>{
+  const ready=()=>{$('#offline-status').textContent='Ready offline.';};
+  if(reg.active)ready();else navigator.serviceWorker.ready.then(ready);
+  function update(){if(reg.waiting&&navigator.serviceWorker.controller){$('#update-banner').hidden=false;$('#update-button').onclick=()=>{if($('#transaction-dialog').open||$('#pin-dialog').open||$('#save-recovery-dialog').open||$('#reset-pin-dialog').open){notify('Save or close the transaction form before updating.');return;}if(storageUnavailable&&data.transactions.length){notify('Back up your session data before reloading to update.');return;}reg.waiting.postMessage('SKIP_WAITING');};}}
+  update();reg.addEventListener('updatefound',()=>{reg.installing?.addEventListener('statechange',update);});let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!refreshing&&navigator.serviceWorker.controller&&reg.waiting===null&&!$('#update-banner').hidden){refreshing=true;location.reload();}});
+ }).catch(()=>{$('#offline-status').textContent='Offline app installation is unavailable. Your ledger can still be saved locally; download backups regularly.';});
+}else $('#offline-status').textContent='Serve over HTTPS or localhost to enable offline app installation.';
