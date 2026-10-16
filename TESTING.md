@@ -4,6 +4,9 @@ Verified on 16 October 2026 in headless Microsoft Edge (Chromium) on Windows. No
 
 ## Automated checks
 
+- Version 1.4: 25 unit tests and 101 browser assertions passed (59 general, 23 PIN and 19 recovery). The general suite now checks three primary destinations, the chart-free home, amount focus, today's default date, and date/tags behind More options, plus row editing, confirmed deletion, search, calendar, currency changes, actual downloads, backup/restore, storage failures, responsive widths, themes, cross-tab changes and offline entry. Disclosure controls are exercised through visible UI. No runtime errors occurred.
+- Version 1.4: desktop light/dark and 390px mobile layouts were visually reviewed. The original v1 offline installation successfully upgraded to the minimal shell with exact ledger and theme preservation.
+- Version 1.4: a cached v1.3 installation with a synthetic encrypted ledger upgraded to the new shell, preserved its exact stored ciphertext and dark theme, then successfully reset its PIN offline using the previously saved recovery key without losing any record.
 - Version 1.3: 25 unit tests and 96 browser assertions passed (54 general, 23 PIN and 19 recovery). Coverage includes staged recovery setup/cancellation, latest-record preservation after reset, wrong-key rejection, fresh data/recovery keys after PIN changes, legacy PIN migration, quota failures, stale writes and old-wrapper rejection. Browser tests used synthetic ledgers in isolated Edge contexts; no normal browser records or real credentials were used.
 - Version 1.3: the real v1 service-worker-to-current upgrade passed with exact record/theme preservation and offline reopening. No browser runtime errors were detected.
 - Version 1.2: 17 unit tests passed, including ciphertext round trips, wrong PINs, tampering, nonce freshness, lock cancellation of pending writes, PIN changes/removal, quota failure, stale tabs, locked-copy restore and malformed input.
