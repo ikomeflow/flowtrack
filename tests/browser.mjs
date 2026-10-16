@@ -10,7 +10,7 @@ const browser=await chromium.launch({headless:true,...(process.env.FLOWTRACK_QA_
 const origin=process.env.FLOWTRACK_QA_URL||'http://127.0.0.1:4173';
 const output=process.env.FLOWTRACK_QA_OUTPUT||'test-results';await mkdir(output,{recursive:true});
 const errors=[];let passed=0;
-const context=await browser.newContext({viewport:{width:1440,height:1080},acceptDownloads:true});
+const context=await browser.newContext({viewport:{width:1440,height:1080},acceptDownloads:true,colorScheme:'light'});
 const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
 const check=(condition,message)=>{assert.ok(condition,message);passed++;console.log('PASS '+message);};
 async function add(description,amount,type='expense',tags='Food'){
@@ -18,9 +18,21 @@ async function add(description,amount,type='expense',tags='Food'){
 }
 try{
  await page.goto(origin);await page.waitForSelector('#net-value');
- check(await page.locator('#recent-list').innerText().then(s=>s.includes('fresh start')),'fresh install has honest empty state');
+ check(await page.locator('#recent-list').innerText().then(s=>s.includes('No transactions')),'fresh install has honest empty state');
  await add('Design payment','1000.29','income','Work');await add('Lunch and bus','200.10','expense','Food, Transport');
  check((await page.locator('#net-value').innerText()).includes('800.19'),'exact dashboard income minus expenses');
+ const ledgerBeforeTheme=await page.evaluate(()=>localStorage.getItem('flowtrack.v1'));
+ await page.getByRole('button',{name:'Switch to dark mode',exact:true}).click();
+ check(await page.locator('html').getAttribute('data-theme')==='dark','theme toggle enables dark mode');
+ check(await page.locator('.panel').first().evaluate(el=>getComputedStyle(el).backgroundColor)==='rgb(20, 22, 27)','dark mode changes panel surfaces');
+ await page.reload();
+ check(await page.locator('html').getAttribute('data-theme')==='dark','dark preference survives reload');
+ check(await page.evaluate(()=>localStorage.getItem('flowtrack.v1'))===ledgerBeforeTheme,'changing theme preserves the complete ledger');
+ await page.locator('#add-button').click();
+ check(await page.locator('#description').evaluate(el=>getComputedStyle(el).backgroundColor)==='rgb(20, 22, 27)','dark transaction inputs match the theme');
+ await page.locator('.close-transaction').first().click();
+ await page.getByRole('button',{name:'Switch to light mode',exact:true}).click();
+ check(await page.locator('.panel').first().evaluate(el=>getComputedStyle(el).backgroundColor)==='rgb(255, 255, 255)','toggle restores white surfaces');
  await page.reload();check((await page.locator('#income-value').innerText()).includes('1,000.29'),'transactions persist after reload');
  await page.locator('nav a[data-view=transactions]').click();await page.locator('#search').fill('Transport');
  check(await page.locator('#transaction-list tbody tr').count()===1,'search finds optional tags');
@@ -45,15 +57,24 @@ try{
  await page.locator('nav a[data-view=overview]').click();await page.locator('#demo-button').click();check(await page.locator('#demo-banner').isVisible(),'demo is clearly labeled');
  check(await page.evaluate(()=>JSON.parse(localStorage.getItem('flowtrack.v1')).transactions.length)===1,'demo never overwrites personal data');
  await page.locator('#toast').waitFor({state:'hidden'});await page.screenshot({path:join(output,'desktop.png'),fullPage:true});
+ await page.getByRole('button',{name:'Switch to dark mode',exact:true}).click();
+ await page.screenshot({path:join(output,'desktop-dark.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(output,'mobile.png'),fullPage:true});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'390px mobile layout has no horizontal overflow');
  for(const width of [320,375,768,1024]){await page.setViewportSize({width,height:900});for(const view of ['overview','transactions','calendar','settings']){await page.locator(`nav a[data-view=${view}]`).click();check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${view} fits ${width}px`);}}
  await page.locator('#exit-demo').click();
  await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
  await context.setOffline(true);await page.reload();check((await page.locator('#income-value').innerText()).includes('1,000.29'),'PWA reloads offline with saved data');
+ check(await page.locator('html').getAttribute('data-theme')==='dark','saved theme works offline');
  await page.locator('nav a[data-view=overview]').click();await add('Offline entry','0.29');check((await page.locator('#net-value').innerText()).includes('1,000.00'),'offline add persists exact decimals');await context.setOffline(false);
  const second=await context.newPage();await second.goto(origin);await second.evaluate(()=>{const d=JSON.parse(localStorage.getItem('flowtrack.v1'));d.transactions=[];localStorage.setItem('flowtrack.v1',JSON.stringify(d));});await page.waitForTimeout(200);check((await page.locator('#net-value').innerText()).includes('0.00'),'another tab updates current ledger');await second.close();
  await page.evaluate(()=>localStorage.setItem('flowtrack.v1','unreadable-data'));await page.reload();check(await page.locator('#storage-alert').isVisible()&&await page.locator('#add-button').isDisabled(),'corrupted storage visibly blocks accidental overwrite');check(await page.evaluate(()=>localStorage.getItem('flowtrack.v1'))==='unreadable-data','corrupt original is preserved');
  await context.close();
- const blocked=await browser.newContext();await blocked.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Blocked','SecurityError');}});});const bp=await blocked.newPage();await bp.goto(origin);check((await bp.locator('#storage-alert').innerText()).includes('only last for this open session'),'blocked storage shows session-only warning');await blocked.close();
+ const systemContext=await browser.newContext({colorScheme:'dark'});const systemPage=await systemContext.newPage();await systemPage.goto(origin);
+ check(await systemPage.locator('html').getAttribute('data-theme')==='dark','first visit follows the device appearance');
+ await systemPage.getByRole('button',{name:'Switch to light mode',exact:true}).click();await systemPage.reload();
+ check(await systemPage.locator('html').getAttribute('data-theme')==='light','explicit light preference overrides dark device appearance');
+ const themePeer=await systemContext.newPage();await themePeer.goto(origin);await themePeer.getByRole('button',{name:'Switch to dark mode',exact:true}).click();await systemPage.waitForFunction(()=>document.documentElement.dataset.theme==='dark');
+ check(await systemPage.locator('html').getAttribute('data-theme')==='dark','theme preference synchronizes between tabs');await systemContext.close();
+ const blocked=await browser.newContext({colorScheme:'light'});await blocked.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Blocked','SecurityError');}});});const bp=await blocked.newPage();await bp.goto(origin);check((await bp.locator('#storage-alert').innerText()).includes('only last for this open session'),'blocked storage shows session-only warning');await bp.getByRole('button',{name:'Switch to dark mode',exact:true}).click();check(await bp.locator('html').getAttribute('data-theme')==='dark','theme toggle still works when browser storage is blocked');await blocked.close();
  check(errors.length===0,'no JavaScript runtime errors');console.log(`Browser QA complete: ${passed} assertions passed.`);
 }finally{await browser.close();}
