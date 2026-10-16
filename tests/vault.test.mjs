@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {LedgerVault,validateVault,validatePin} from '../dist/vault-v7.mjs';
+import {LedgerVault,validateVault,validatePin} from '../dist/vault-v8.mjs';
 import {STORAGE_KEY} from '../dist/core.mjs';
 import {LedgerVault as PreviousVault} from '../dist/vault-v5.mjs';
 const ledger={version:1,currency:'GHS',transactions:[{id:'private-id',description:'Private description',amount:12345,type:'income',date:'2026-10-16',tags:['Secret']}]};

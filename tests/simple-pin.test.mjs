@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {LedgerVault} from '../dist/vault-v7.mjs';
+import {LedgerVault} from '../dist/vault-v8.mjs';
 const ledger={version:1,currency:'XAF',transactions:[{id:'simple',description:'Preserved record',amount:1234,type:'income',date:'2026-10-16',tags:[]}]};
 function setup(){const map=new Map(),storage={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v)};const vault=new LedgerVault(storage);vault.load();return {vault,map,storage};}
 test('minimal creation commits encrypted records without silently generating recovery',async()=>{const {vault,map}=setup();const draft=await vault.prepareSimplePin('8392',ledger);assert.equal(draft.recoveryKey,null);assert.equal(vault.enabled,false);vault.commitPrepared(draft);assert.equal(vault.hasRecovery,false);assert.ok(!JSON.stringify([...map.values()]).includes('Preserved record'));vault.load();assert.deepEqual(await vault.unlock('8392'),ledger);await assert.rejects(vault.prepareSimpleReset('00'.repeat(32),'1239'),/not set up/);});
