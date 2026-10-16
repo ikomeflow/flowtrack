@@ -10,7 +10,9 @@ See [WordPress integration notes](wordpress/INTEGRATION.md) for the current depl
 
 ## What works
 
-- Optional **Settings → PIN lock**. Choose 6–12 digits and save the generated recovery key before setup finishes. Protected ledgers lock on reopening, after five idle minutes, or with Lock now. No PIN is set automatically.
+- **First use asks for PIN setup.** Choose 6–12 digits and save the generated recovery key before the personal ledger opens. Existing unprotected records are preserved and remain unchanged until setup finishes. No PIN is set automatically; cancellation keeps the setup gate and original records. PIN protection cannot be turned off in the interface.
+- Optional **Settings → PIN lock → Enable device unlock**. Compatible platform passkeys use face recognition, fingerprint or the device screen-lock PIN. The browser chooses the method; FlowTrack does not receive biometric data. The FlowTrack PIN always remains available. A first-use offer can be dismissed.
+- The portfolio launches a named app tab at `/#overview`. A repeat click in the same browsing session can reuse that already-unlocked document without reloading. A closed/reloaded tab, five idle minutes, or Lock now requires verification again. No unlocked key or PIN is saved to browser storage.
 - **Forgot PIN → Reset PIN** uses a recovery key saved beforehand and preserves every record. Existing PIN users can add recovery from Settings after unlocking once. A new PIN or a replacement recovery key issues a fresh key to save.
 - Light and dark modes from the sun/moon button. Follows the device appearance initially; an explicit choice is saved separately from the ledger, works offline, and synchronizes between tabs.
 - Three main destinations: **Home, History and Settings**. Home shows the monthly balance, smaller income/expense totals and five recent entries, without charts or extra cards.
@@ -69,6 +71,12 @@ PIN setup, migration and recovery reset are staged in memory. The old stored led
 
 Changing or disabling protection requires the current PIN; forgotten-PIN reset requires the matching recovery key. Locking clears the rendered ledger and working state, discards the key and staged setup, and closes unfinished dialogs; unsaved drafts are lost. Manual locking signals other tabs. Another tab changing the protected ledger locks this tab.
 
+Version 1.5 requires PIN setup for personal use. Device unlock uses the [WebAuthn PRF extension](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/WebAuthn_extensions#prf): a platform credential, required user verification, a random 256-bit input, and a credential-derived 256-bit secret wrap the ledger's actual data key with AES-GCM. Credential ID, RP ID, PRF input and wrapped ciphertext are saved; the PRF result and raw data key are not. Assertion challenge, origin, credential ID, RP hash, user-presence and user-verification flags are checked before accepting the PRF result. There is no server account or server authentication session; successful authenticated decryption is the local access check.
+
+Device unlock needs both a platform authenticator and PRF support. Unsupported, cancelled or failed enrollment leaves PIN/recovery access and stored records unchanged. Registration may require two device confirmations. A passkey created before an unsupported or cancelled second step may remain in the device's credential manager; the app does not gain an unlock route unless encrypted setup succeeds. Passkey providers may sync credentials; **the ledger does not sync**. Never promise facial recognition specifically: the platform may use fingerprints, a device PIN or another supported verification method. See [Google's user-verification explanation](https://web.dev/articles/webauthn-user-verification).
+
+Changing the FlowTrack PIN, replacing a recovery key, resetting a forgotten PIN, or removing device unlock rotates the data/recovery keys and removes the previous device wrapper. Save the new recovery key; re-enable quick unlock afterward if desired. Cancelling keeps the old routes. Removing the route does not delete a passkey from the operating system; older saved ledger copies retain their own credentials. Damaged optional device metadata is discarded so PIN/recovery access can still work. The underlying vault API retains legacy PIN-removal support for compatibility tests; the current UI does not expose it.
+
 **A local privacy lock has limits.** A short numeric PIN can be guessed offline by someone who obtains the locked file; UI delays cannot prevent that attack. A recovery key grants access to its matching ledger, so store it separately and privately. This does not protect an unlocked browser, malicious extensions, malware, or compromised same-origin JavaScript, and cannot securely erase earlier plaintext from disk history or backups. Prefer a longer, unpredictable PIN and protect the device itself. Without the PIN, a matching recovery key saved beforehand, or a separate normal JSON backup, encrypted records cannot be recovered.
 
 Normal JSON backups and CSV exports are **unencrypted**, including when PIN lock is on. Keep them private. A locked copy is restorable with its matching PIN or recovery key; older copies keep their own keys. The destructive device reset is separate from key-based PIN recovery, requires confirmation and erases records; a separate normal JSON backup can then restore them. Cancellation preserves the original.
@@ -81,7 +89,7 @@ Use a dedicated origin for financial records if hosting other apps. All pages on
 
 ## Offline use and updates
 
-Version 1.4 uses `app-v5.mjs`, `styles-v5.css` and the unchanged `vault-v4.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
+Version 1.5 uses `app-v6.mjs`, `styles-v6.css`, `vault-v5.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
 
 Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. Settings reports whether offline files are ready. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
 
@@ -92,9 +100,10 @@ The app checks for service-worker updates during visits. A banner offers to appl
 ```text
 dist/                 Publish this folder, as-is
   index.html          Responsive UI and accessible dialogs
-  styles-v5.css       Minimal light/dark visual system
-  app-v5.mjs          Minimal UI, PIN recovery, downloads, PWA
-  vault-v4.mjs        Encrypted storage, staged recovery and migration
+  styles-v6.css       Minimal light/dark visual system
+  app-v6.mjs          Required PIN, device unlock, UI, downloads, PWA
+  vault-v5.mjs        Encrypted storage, device key wrapping, recovery
+  device-v1.mjs       Platform WebAuthn PRF and verification checks
   theme.js            Appearance preference before rendering
   core.mjs            Validation, exact amounts, filtering, CSV
   sw.js               Versioned offline shell
@@ -108,4 +117,5 @@ LICENSE               MIT
 ## Contributing
 
 Keep the app lightweight, usable on small screens and honest about privacy. Avoid adding tracking, mandatory registration or network dependencies. Run checks and tests, then verify mobile, offline and backup flows before proposing changes. Never commit real financial records.
+
 

@@ -4,6 +4,7 @@ Verified on 16 October 2026 in headless Microsoft Edge (Chromium) on Windows. No
 
 ## Automated checks
 
+- Version 1.5: 33 unit tests and 121 browser assertions passed (59 general, 23 PIN, 19 recovery and 20 device/required-setup checks). Device checks use Chromium's real WebAuthn API with a synthetic CTAP2.1 platform authenticator supporting PRF, not actual user credentials. They verify encrypted enrollment/unlock, PIN fallback, a reused unlocked app tab, new-document locking, offline device unlock, removal cancellation/key rotation, and an authenticator without PRF. Cancellation is simulated by a standard NotAllowedError. Real Face ID, fingerprints and Windows Hello hardware have not been enrolled or tested.
 - Version 1.4: 25 unit tests and 101 browser assertions passed (59 general, 23 PIN and 19 recovery). The general suite now checks three primary destinations, the chart-free home, amount focus, today's default date, and date/tags behind More options, plus row editing, confirmed deletion, search, calendar, currency changes, actual downloads, backup/restore, storage failures, responsive widths, themes, cross-tab changes and offline entry. Disclosure controls are exercised through visible UI. No runtime errors occurred.
 - Version 1.4: desktop light/dark and 390px mobile layouts were visually reviewed. The original v1 offline installation successfully upgraded to the minimal shell with exact ledger and theme preservation.
 - Version 1.4: a cached v1.3 installation with a synthetic encrypted ledger upgraded to the new shell, preserved its exact stored ciphertext and dark theme, then successfully reset its PIN offline using the previously saved recovery key without losing any record.
@@ -41,6 +42,7 @@ In a second terminal:
 node tests/browser.mjs
 node tests/pin-browser.mjs
 node tests/recovery-browser.mjs
+node tests/device-browser.mjs
 ```
 
 The browser suite creates temporary, synthetic financial records in an isolated browser context, downloads test backups and writes screenshots under ignored `test-results/`. It never reads your normal browser profile. It expects port 4173 unless `FLOWTRACK_QA_URL` is set. `FLOWTRACK_QA_BROWSER` optionally selects a locally installed Chromium/Edge executable. In environments with a shared package bundle, `FLOWTRACK_QA_PACKAGE_ROOT` can point to that bundle's Node package root.
