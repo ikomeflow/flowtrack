@@ -1,3 +1,14 @@
+## Version 1.11 performance verification — 17 October 2026
+
+- **47 unit tests**: 41 existing calculation, storage, PIN, recovery and device tests plus six service-worker tests.
+- **236 browser assertions** passed: 59 general, 24 PIN, 19 recovery, 29 virtual-device, 55 mobile, 28 fast-entry/Undo and 22 performance/upgrade checks. Tests use disposable browser contexts and synthetic records; no production ledger or real credential was used.
+- Slow connection comparison: 400 ms latency, 50 KB/s download, 4× CPU slowdown, gzip responses on a local test server. PIN gate: old 4227 ms, new 2069 ms. Stalled document reload: old timed out at 2510 ms, new completed at 392 ms without requesting the document from the network. Measurements are specific to this controlled run.
+- A cached previous-release installation downloads the candidate in the background, keeps the old cache while waiting, refuses updating with an open draft, and applies coherent HTML/code on explicit Update. Stored ciphertext stayed byte-for-byte identical; the old PIN opened all 250 records.
+- A failed candidate asset download removes only the incomplete cache. The previous app and PIN-protected ledger remain usable offline.
+- Home does not construct hidden History or Calendar. History starts with 100 rows, expands on demand, searches all 250 fixture rows and exports all 250 rows to CSV. Locking clears transaction text, and all records unlock offline.
+- Optional device verification still supports automatic foreground verification, cancellation without repeated prompts, PIN fallback and offline use. Device tests use a synthetic authenticator; physical iOS/Android authentication was not tested.
+- Run the optional performance suite with `node tests/performance-browser.mjs` alongside the existing browser suites; it starts its own isolated local comparison server.
+
 # Verification
 
 Verified on 16 October 2026 in headless Microsoft Edge (Chromium) on Windows. No live deployment is implied by these local results.

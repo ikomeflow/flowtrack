@@ -2,11 +2,21 @@
 
 **Your money, in view.** Free, open-source income and expense tracking for young Africans and anyone building better money habits. An [Ikomeflow](https://ikomeflow.com) / Futura Group project, in minimal blue and white.
 
-No signup, backend, external fonts, analytics, or runtime dependencies. A small, buildless web app using HTML, CSS and JavaScript modules. MIT licensed.
+No signup, backend, external fonts, analytics, or runtime dependencies. A small web app using HTML, CSS and JavaScript. Published files are bundled and minified at build time; the app needs no runtime packages. MIT licensed.
 
 Live app: [flowtrack.ikomeflow.com](https://flowtrack.ikomeflow.com/) · [Project page](https://ikomeflow.com/flowtrack/) · [GitHub source](https://github.com/ikomeflow/flowtrack)
 
 See [WordPress integration notes](wordpress/INTEGRATION.md) for the current deployment and DNS configuration.
+
+## Faster loading (1.11)
+
+After the first complete download, reopening uses the saved matching HTML and app files immediately, even if the connection stalls. A new service worker downloads a complete update in the background. The existing Update button applies it together, after open forms are closed; an incomplete download keeps the old version available. No ledger key, PIN format, recovery route or encryption setting changed.
+
+The theme bootstrap is included in the page and authorized with an exact CSP hash. One compact startup bundle replaces the previous module request chain. Optional device verification loads after the PIN gate can paint. Home prepares its own totals and recent entries; History and Calendar render when opened. History initially displays 100 matching transactions, with “Show 100 more”; searches and CSV/JSON exports still cover all records.
+
+A controlled local test with 400 ms latency, 50 KB/s download and 4× CPU slowdown reached the PIN gate in **4.23 seconds before / 2.07 seconds after**. With the document network request stalled, the old reload did not finish within 2.5 seconds; the new cached reload opened in **0.39 seconds**. These are test-environment measurements, not a guarantee for every device or connection.
+
+To rebuild the committed files, run `npm ci` then `npm run build`. Source is under `src/`; encryption and compatibility modules remain under `dist/`. Run `npm run check`, `npm test` and the optional browser suites described in TESTING.md. The GitHub workflow rebuilds before checking and deploying.
 
 ## What works
 
@@ -89,7 +99,7 @@ Use a dedicated origin for financial records if hosting other apps. All pages on
 
 ## Offline use and updates
 
-Version 1.10 uses `app-v12.mjs`, `styles-v9.css`, `vault-v8.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
+Version 1.11 uses `app-v13.mjs`, `styles-v10.css`, `vault-v8.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
 
 Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. Settings reports whether offline files are ready. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
 
@@ -100,16 +110,18 @@ The app checks for service-worker updates during visits. A banner offers to appl
 ```text
 dist/                 Publish this folder, as-is
   index.html          Responsive UI and accessible dialogs
-  styles-v9.css       Minimal light/dark visual system
-  app-v12.mjs          Required PIN, device unlock, UI, downloads, PWA
+  styles-v10.css      Minified light/dark visual system
+  app-v13.mjs          Bundled PIN, UI, downloads, PWA
   vault-v8.mjs        Encrypted storage, device key wrapping, recovery
   device-v1.mjs       Platform WebAuthn PRF and verification checks
-  theme.js            Appearance preference before rendering
+  theme.js            Legacy appearance bootstrap (current theme is inline)
   core-v2.mjs         Current validation, exact amounts, insertion-order history, CSV
   core.mjs            Compatible shared validation for existing vault modules
   sw.js               Versioned offline shell
   manifest.webmanifest, icon*   Installation metadata/assets
-tests/                Node unit tests
+src/                  Readable app, styles and HTML build template
+build.mjs             Reproducible bundle, stylesheet and HTML build
+tests/                Unit and optional browser tests
 .github/workflows/    Tests and GitHub Pages deployment
 server.mjs            Dependency-free local preview server
 LICENSE               MIT
