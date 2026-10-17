@@ -20,13 +20,48 @@
   <meta name="twitter:description" content="Your money, in view. A free application to track income and expenses. Simple, private, and ready when you are.">
   <meta name="twitter:image" content="https://flowtrack.ikomeflow.com/share-card-v1.png">
   <meta name="twitter:image:alt" content="FlowTrack application. Track income. Manage expenses. Free.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Qzd9/iMKRcjKMfFu5GyuFfQFNHc3skXa7r/YMo4DDV0='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>FlowTrack — Track income &amp; expenses. Free.</title>
-  <script src="./theme.js"></script>
-  <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./styles-v9.css">
-  <script type="module" src="./app-v12.mjs"></script>
+  <script>(() => {
+  const key = 'flowtrack.theme';
+  const system = window.matchMedia('(prefers-color-scheme: dark)');
+  let preference;
+  try { preference = localStorage.getItem(key); } catch {}
+  if (!['light', 'dark'].includes(preference)) preference = null;
+  function apply() {
+    const dark = (preference || (system.matches ? 'dark' : 'light')) === 'dark';
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    const button = document.getElementById('theme-toggle');
+    if (button) {
+      const label = `Switch to ${dark ? 'light' : 'dark'} mode`;
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b0c0f' : '#ffffff');
+  }
+  apply();
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      preference = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem(key, preference); } catch {}
+      apply();
+    });
+    apply();
+  });
+  system.addEventListener('change', () => { if (!preference) apply(); });
+  window.addEventListener('storage', event => {
+    if (event.key === key || event.key === null) {
+      preference = ['light', 'dark'].includes(event.newValue) ? event.newValue : null;
+      apply();
+    }
+  });
+})();
+</script>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./styles-v10.css">
+  <script type="module" src="./app-v13.mjs"></script>
 </head>
 <body>
+<div id="startup" role="status" style="min-height:100dvh;display:grid;place-content:center;text-align:center;font-family:system-ui,sans-serif"><p><strong>FlowTrack.</strong></p><p>Opening your private workspace…</p></div>
 <a class="skip" href="#main">Skip to content</a>
 <section id="setup-screen" class="lock-screen" hidden aria-labelledby="setup-title"><div class="lock-card"><a class="brand" href="https://ikomeflow.com"><img src="./icon.svg" width="36" height="36" alt="">FlowTrack.</a><h1 id="setup-title">Protect your records</h1><p class="gate-hint">Choose a 4-digit PIN. Records stay on this device.</p><p id="setup-existing" class="gate-hint" hidden>Your existing records will be kept.</p><p id="setup-error" class="form-error" role="alert"></p><button class="button primary" id="setup-pin">Create PIN</button><button class="text-link" id="setup-restore">Restore a backup</button><button class="text-link" id="setup-backup" hidden>Back up existing records</button><p class="gate-footnote">No account. Records stay in this browser. Backup files are unencrypted; keep them private.</p></div></section>
 <section id="lock-screen" class="lock-screen" hidden aria-labelledby="unlock-title"><div class="lock-card"><a class="brand" href="https://ikomeflow.com"><img src="./icon.svg" width="36" height="36" alt="">FlowTrack.</a><h1 id="unlock-title">Unlock FlowTrack</h1><button class="button primary" id="device-unlock" hidden>Unlock with device</button><p id="device-unlock-error" class="form-error" role="alert"></p><details id="pin-entry" open><summary id="pin-entry-summary">Enter PIN</summary><form id="unlock-form"><label for="unlock-pin">PIN</label><input id="unlock-pin" type="password" inputmode="numeric" pattern="([0-9]{4}|[0-9]{6,12})" minlength="4" maxlength="12" autocomplete="current-password" required><p id="unlock-error" class="form-error" role="alert"></p><button class="button primary" id="unlock-button" type="submit">Unlock</button></form></details><details><summary>Forgot PIN?</summary><p id="recovery-gate-hint">Use your saved recovery key to reset the PIN and keep your records.</p><button class="button secondary" id="start-pin-reset">Recover PIN</button><p>Without the PIN or a recovery key set up beforehand, you need a separate JSON backup. Erasing this device deletes its records.</p><button class="text-link" id="download-locked">Save locked copy</button><button class="text-link" id="reset-locked">Reset this device</button></details></div></section>
