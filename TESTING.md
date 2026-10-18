@@ -1,3 +1,9 @@
+# Version 1.13.0 — installable Futura Group app
+
+Added installation help on the PIN screens and in Settings, native prompt handling, standalone detection, install icons and an updated offline shell. Ledger, PIN and recovery storage remain unchanged.
+
+Validation: build and syntax checks passed; 47 unit tests and 24 isolated browser installation checks passed. The browser checks cover prompt acceptance/cancellation, unchanged storage, iPhone guidance, standalone detection, mobile layout, Settings discovery, and offline reopening. Chromium reported no app-side installability errors; the private test context itself cannot perform actual installation.
+
 # Version 1.12.2 — Futura Group producer branding
 
 App credits and producer metadata identify Futura Group. Settings and social previews use the same credit; the new preview has a fresh URL. Offline cache version updated. App addresses, storage keys, PINs, recovery settings and records are unchanged.

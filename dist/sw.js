@@ -1,9 +1,9 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v17-20261018-futura';
+const CACHE=PREFIX+'v18-20261018-install';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
-const SHELL=['index.html','styles-v11.css','app-v14.mjs','device-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'].map(p=>new URL(p,BASE).href);
+const SHELL=['index.html','styles-v11.css','app-v14.mjs','device-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
 // Install one complete version before replacing the working offline app.
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).catch(async error=>{await caches.delete(CACHE);throw error;}));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
