@@ -20,14 +20,17 @@
   <meta name="twitter:description" content="Your money, in view. A free application to track income and expenses. Simple, private, and ready when you are.">
   <meta name="twitter:image" content="https://flowtrack.ikomeflow.com/share-card-v1.png">
   <meta name="twitter:image:alt" content="FlowTrack application. Track income. Manage expenses. Free.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' __THEME_CSP__; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' __THEME_CSP__ __STARTUP_CSP__; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>FlowTrack — Track income &amp; expenses. Free.</title>
   <!-- FLOWTRACK_THEME -->
-  <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./styles-v10.css">
-  <script type="module" src="./app-v13.mjs"></script>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><!-- FLOWTRACK_GATE_STYLES -->
+  <script type="module" id="app-entry" src="./app-v14.mjs"></script>
 </head>
 <body>
-<div id="startup" role="status" style="min-height:100dvh;display:grid;place-content:center;text-align:center;font-family:system-ui,sans-serif"><p><strong>FlowTrack.</strong></p><p>Opening your private workspace…</p></div>
+<div id="startup" class="startup" role="status"><strong>FlowTrack.</strong><p id="startup-message">Opening…</p><button id="startup-retry" class="button secondary" type="button" hidden>Retry</button></div>
+<div class="update-banner" id="update-banner" role="status" hidden>Update ready. <button id="update-button">Update app</button></div>
+<div id="style-alert" class="style-alert" role="status" hidden>Styling download interrupted. <button id="style-retry" class="text-link" type="button">Retry</button></div>
+<div id="gate-download" class="gate-download" hidden><p id="gate-offline-status" role="status">Saving offline files…</p><button id="retry-offline" class="text-link" type="button" hidden>Retry download</button></div>
 <a class="skip" href="#main">Skip to content</a>
 <section id="setup-screen" class="lock-screen" hidden aria-labelledby="setup-title"><div class="lock-card"><a class="brand" href="https://ikomeflow.com"><img src="./icon.svg" width="36" height="36" alt="">FlowTrack.</a><h1 id="setup-title">Protect your records</h1><p class="gate-hint">Choose a 4-digit PIN. Records stay on this device.</p><p id="setup-existing" class="gate-hint" hidden>Your existing records will be kept.</p><p id="setup-error" class="form-error" role="alert"></p><button class="button primary" id="setup-pin">Create PIN</button><button class="text-link" id="setup-restore">Restore a backup</button><button class="text-link" id="setup-backup" hidden>Back up existing records</button><p class="gate-footnote">No account. Records stay in this browser. Backup files are unencrypted; keep them private.</p></div></section>
 <section id="lock-screen" class="lock-screen" hidden aria-labelledby="unlock-title"><div class="lock-card"><a class="brand" href="https://ikomeflow.com"><img src="./icon.svg" width="36" height="36" alt="">FlowTrack.</a><h1 id="unlock-title">Unlock FlowTrack</h1><button class="button primary" id="device-unlock" hidden>Unlock with device</button><p id="device-unlock-error" class="form-error" role="alert"></p><details id="pin-entry" open><summary id="pin-entry-summary">Enter PIN</summary><form id="unlock-form"><label for="unlock-pin">PIN</label><input id="unlock-pin" type="password" inputmode="numeric" pattern="([0-9]{4}|[0-9]{6,12})" minlength="4" maxlength="12" autocomplete="current-password" required><p id="unlock-error" class="form-error" role="alert"></p><button class="button primary" id="unlock-button" type="submit">Unlock</button></form></details><details><summary>Forgot PIN?</summary><p id="recovery-gate-hint">Use your saved recovery key to reset the PIN and keep your records.</p><button class="button secondary" id="start-pin-reset">Recover PIN</button><p>Without the PIN or a recovery key set up beforehand, you need a separate JSON backup. Erasing this device deletes its records.</p><button class="text-link" id="download-locked">Save locked copy</button><button class="text-link" id="reset-locked">Reset this device</button></details></div></section>
@@ -45,7 +48,7 @@
   <header class="topbar"><span class="breadcrumb" id="breadcrumb">Home</span><a class="mobile-brand brand" href="#overview"><img src="./icon.svg" width="30" height="30" alt="">FlowTrack.</a><div class="top-actions"><button class="icon-button" id="lock-button" aria-label="Lock FlowTrack" title="Lock now" data-icon="lock" hidden></button><span class="connection" id="connection"><span></span> Local</span><button class="icon-button theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.8 13A9 9 0 0 1 11 3.2 9 9 0 1 0 20.8 13Z"/></svg><svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button></div></header>
   <div class="alert" id="storage-alert" role="alert" hidden></div>
   <div class="demo-banner" id="demo-banner" hidden><span><strong>Demo.</strong> Sample data only.</span><button id="exit-demo">Exit demo</button></div>
-  <div class="update-banner" id="update-banner" hidden>A new version is ready. <button id="update-button">Update app</button></div>
+
   <main id="main" tabindex="-1">
     <div class="page-heading"><div><h1 id="page-title">Home</h1></div><div id="heading-month"><div class="month-control"><button class="icon-button prev-month" aria-label="Previous month" data-icon="left"></button><label class="sr-only" for="overview-month">Overview month</label><span class="month-picker"><span id="overview-month-label" aria-hidden="true"></span><input type="month" id="overview-month" min="1900-01" max="9999-12"></span><button class="icon-button next-month" aria-label="Next month" data-icon="right"></button></div></div><button class="button primary" id="add-button"><span data-icon="plus"></span> Add</button></div>
     <div id="overview-view" class="view">
@@ -81,5 +84,6 @@
 <dialog id="confirm-dialog" aria-labelledby="confirm-title"><div class="dialog-heading"><h2 id="confirm-title">Confirm</h2><button type="button" class="icon-button" id="confirm-close" aria-label="Close" data-icon="close"></button></div><p id="confirm-message"></p><div class="dialog-actions"><button class="button secondary" id="confirm-cancel">Cancel</button><button class="button primary" id="confirm-ok">Continue</button></div></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-message"></span><button type="button" id="undo-delete" hidden>Undo</button></div>
 <noscript><div class="noscript">FlowTrack needs JavaScript to manage records in your browser. Enable it to continue.</div></noscript>
+<!-- FLOWTRACK_STARTUP -->
 </body></html>
 
