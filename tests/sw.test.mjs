@@ -7,7 +7,7 @@ function setup(path='/',failInstall=false){
  const events={},stores=new Map(),deleted=[],calls=[];let skipped=0,claimed=0;
  const caches={open:async name=>{if(!stores.has(name))stores.set(name,new Map());const map=stores.get(name);return {match:async url=>map.get(url),addAll:async urls=>{if(failInstall)throw Error('network failure');for(const url of urls)map.set(url,new Response('saved:'+url));}};},keys:async()=>[...stores.keys()],delete:async name=>{deleted.push(name);return stores.delete(name);}};
  vm.runInNewContext(source,{URL,Promise,self:{location:{href:'https://example.test'+path+'sw.js'},addEventListener:(name,fn)=>events[name]=fn,skipWaiting:()=>{skipped++;},clients:{claim:async()=>{claimed++;}}},caches,fetch:request=>{calls.push(request.url);return new Promise(()=>{});}});
- const active='flowtrack:'+path+':v18-20261018-install',index='https://example.test'+path+'index.html';
+ const active='flowtrack:'+path+':v19-20261018-simple-install',index='https://example.test'+path+'index.html';
  function fetch(url,mode='navigate',method='GET'){let result;events.fetch({request:{url,mode,method},respondWith:p=>result=p});return result;}
  async function run(name){let task;events[name]({waitUntil:p=>task=p});await task;}
  return {events,stores,deleted,calls,active,index,fetch,run,skipped:()=>skipped,claimed:()=>claimed};
