@@ -13,7 +13,7 @@
     <text x="76" y="440" font-size="30" opacity=".86">Your money, in view.</text>
     <rect x="76" y="490" width="100" height="46" rx="23" fill="#fff"/>
     <text x="126" y="521" font-size="22" font-weight="700" text-anchor="middle" fill="#1557e8">Free.</text>
-    <text x="76" y="589" font-size="17" opacity=".68">IKOMEFLOW / FUTURA GROUP</text>
+    <text x="76" y="589" font-size="17" opacity=".68">BY IKOMEFLOW</text>
     <text x="1124" y="589" font-size="18" text-anchor="end" opacity=".82">flowtrack.ikomeflow.com</text>
   </g>
 </svg>

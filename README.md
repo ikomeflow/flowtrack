@@ -1,6 +1,6 @@
 # FlowTrack
 
-**Your money, in view.** Free, open-source income and expense tracking for young Africans and anyone building better money habits. An [Ikomeflow](https://ikomeflow.com) / Futura Group project, in minimal blue and white.
+**Your money, in view.** Free, open-source income and expense tracking for young Africans and anyone building better money habits. By [Ikomeflow](https://ikomeflow.com), in minimal blue and white.
 
 No signup, backend, external fonts, analytics, or runtime dependencies. A small web app using HTML, CSS and JavaScript. Published files are bundled and minified at build time; the app needs no runtime packages. MIT licensed.
 
