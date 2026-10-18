@@ -1,3 +1,9 @@
+# Version 1.12.1 — Ikomeflow branding and consistent loading colors
+
+Public app credits use Ikomeflow. PIN screens have no creator byline. Critical loading colors now match the fully loaded light/dark palette, so the primary blue and background do not change as workspace styles arrive. No storage, security, calculation or export logic changed.
+
+Verified across both apps: 50 isolated browser checks passed for light/dark colors before and after workspace styles, mobile/desktop layout, creator credits, blank PIN bylines, exact ciphertext preservation and absence of browser errors. Both six-test service-worker suites passed. The new FlowTrack share image was rendered from its SVG and inspected.
+
 ## Version 1.12 startup reliability verification — 17 October 2026
 
 - **47 unit tests and 224 browser assertions passed**: 59 general, 24 PIN, 19 recovery, 29 virtual-device, 55 mobile, 22 performance/upgrade and 16 startup/failure checks. Synthetic records and isolated profiles only.
