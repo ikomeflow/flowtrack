@@ -99,9 +99,9 @@ Use a dedicated origin for financial records if hosting other apps. All pages on
 
 ## Offline use and updates
 
-Version 1.11 uses `app-v13.mjs`, `styles-v10.css`, `vault-v8.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
+Version 1.12 uses `app-v14.mjs`, `styles-v11.css`, `vault-v8.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
 
-Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. Settings reports whether offline files are ready. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
+Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. The PIN screen and Settings report whether offline files are ready. The small PIN stylesheet is inline; the full workspace stylesheet loads after startup. Interrupted downloads expose Retry without changing the ledger. If an older cached copy is stuck before the PIN, open https://flowtrack.ikomeflow.com/open.html on the same browser and choose Update app if offered. This same-origin entry preserves existing browser records; do not clear site data. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
 
 The app checks for service-worker updates during visits. A banner offers to apply a waiting update. When editing the shell, change the `CACHE` version in `dist/sw.js`. Do not reuse a cache name for different app releases. JSON backups remain compatible as long as the schema stays at version 1. See [MDN's service-worker guide](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers).
 
@@ -110,8 +110,8 @@ The app checks for service-worker updates during visits. A banner offers to appl
 ```text
 dist/                 Publish this folder, as-is
   index.html          Responsive UI and accessible dialogs
-  styles-v10.css      Minified light/dark visual system
-  app-v13.mjs          Bundled PIN, UI, downloads, PWA
+  styles-v11.css      Minified light/dark visual system
+  app-v14.mjs          Bundled PIN, UI, downloads, PWA
   vault-v8.mjs        Encrypted storage, device key wrapping, recovery
   device-v1.mjs       Platform WebAuthn PRF and verification checks
   theme.js            Legacy appearance bootstrap (current theme is inline)

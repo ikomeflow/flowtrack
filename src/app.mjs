@@ -193,10 +193,16 @@ function securityStatus(){
  for(const id of ['pin-enable','pin-change','pin-recovery'])$('#'+id).disabled=!!demo||corrupt||storageUnavailable||!globalThis.crypto?.subtle;
 }
 function needsSetup(){return !vault.enabled&&!corrupt;}
+let workspaceStyleWait=false;
 function showApp(){
+ $('#gate-download').hidden=!needsSetup();
  $('#lock-screen').hidden=true;
  if(needsSetup()){$('#setup-screen').hidden=false;$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#setup-existing').hidden=!data.transactions.length;$('#setup-backup').hidden=!data.transactions.length;const unavailable=storageUnavailable||!globalThis.crypto?.subtle;$('#setup-pin').disabled=unavailable;$('#setup-restore').disabled=unavailable;$('#setup-error').textContent=unavailable?'This browser cannot securely save a PIN. Use HTTPS and allow browser storage. Back up existing records first.':'';return;}
- $('#setup-screen').hidden=true;$('#app-shell').hidden=false;$('#app-shell').inert=false;automaticDeviceUnlockPending=false;automaticDeviceUnlockCancelled=false;lastActivity=Date.now();
+ if(document.documentElement.dataset.workspaceStyles!=='ready'){
+  $('#setup-screen').hidden=true;$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#startup').hidden=false;$('#startup-message').textContent='Opening workspace…';$('#startup-retry').hidden=false;
+  if(!workspaceStyleWait){workspaceStyleWait=true;window.addEventListener('flowtrack-styles-ready',()=>{workspaceStyleWait=false;if(!vault.locked)showApp();},{once:true});}return;
+ }
+ $('#startup').hidden=true;$('#setup-screen').hidden=true;$('#app-shell').hidden=false;$('#app-shell').inert=false;automaticDeviceUnlockPending=false;automaticDeviceUnlockCancelled=false;lastActivity=Date.now();
 }
 $('#setup-pin').addEventListener('click',()=>openPin('enable'));
 $('#setup-restore').addEventListener('click',()=>$('#restore-file').click());
@@ -206,7 +212,7 @@ function lockApp(broadcast=true){
  cancelDeviceOperation();if(saving){lockRequested=true;return;}
  hideToast();clearRecoveryDraft();vault.lock();data=emptyState();demo=null;editingId=null;$('#transaction-form').reset();$('#pin-form').reset();$('#reset-pin-form').reset();$('#search').value='';
  for(const dialog of $$('dialog'))if(dialog.open)dialog.close();if(confirmResolve){confirmResolve(false);confirmResolve=null;}
- $('#toast').hidden=true;render();$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#setup-screen').hidden=true;$('#lock-screen').hidden=false;$('#device-unlock-error').textContent='';$('#unlock-pin').value='';$('#unlock-error').textContent='';
+ $('#gate-download').hidden=false;$('#toast').hidden=true;render();$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#setup-screen').hidden=true;$('#lock-screen').hidden=false;$('#device-unlock-error').textContent='';$('#unlock-pin').value='';$('#unlock-error').textContent='';
  if(broadcast)try{localStorage.setItem('flowtrack.lock',crypto.randomUUID());}catch{}
  if(!document.hidden)$(vault.device&&deviceSupported?'#device-unlock':'#unlock-pin').focus();
 }
@@ -318,13 +324,36 @@ function activity(){checkIdle();lastActivity=Date.now();}
 for(const event of ['pointerdown','keydown','touchstart','scroll'])document.addEventListener(event,activity,{passive:true,capture:true});
 document.addEventListener('visibilitychange',checkIdle);window.addEventListener('pagehide',()=>{cancelDeviceOperation();clearRecoveryDraft();$('#pin-form').reset();$('#reset-pin-form').reset();if(vault.enabled)lockApp(false);});setInterval(checkIdle,1000);
 
-load();icons();render();connection();booted=true;if(vault.locked)lockApp(false);else showApp();$('#startup').hidden=true;
-if('serviceWorker' in navigator&&window.isSecureContext){
- navigator.serviceWorker.register('./sw.js').then(reg=>{
-  const ready=()=>{$('#offline-status').textContent='Ready offline.';};
-  if(reg.active)ready();else navigator.serviceWorker.ready.then(ready);
-  function update(){if(reg.waiting&&navigator.serviceWorker.controller){$('#update-banner').hidden=false;$('#update-button').onclick=()=>{if(deviceBusy||$('#transaction-dialog').open||$('#pin-dialog').open||$('#save-recovery-dialog').open||$('#reset-pin-dialog').open||$('#device-dialog').open){notify('Save or close the transaction form before updating.');return;}if(storageUnavailable&&data.transactions.length){notify('Back up your session data before reloading to update.');return;}reg.waiting.postMessage('SKIP_WAITING');};}}
-  update();reg.addEventListener('updatefound',()=>{reg.installing?.addEventListener('statechange',update);});let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!refreshing&&navigator.serviceWorker.controller&&reg.waiting===null&&!$('#update-banner').hidden){refreshing=true;location.reload();}});
- }).catch(()=>{$('#offline-status').textContent='Offline app installation is unavailable. Your ledger can still be saved locally; download backups regularly.';});
-}else $('#offline-status').textContent='Serve over HTTPS or localhost to enable offline app installation.';
+load();icons();render();connection();booted=true;if(vault.locked)lockApp(false);else showApp();if(!workspaceStyleWait)$('#startup').hidden=true;window.dispatchEvent(new Event('flowtrack-ready'));
 
+// All file caching is independent of the encrypted ledger.
+function offlineStatus(text,retry=false){$('#offline-status').textContent=text;$('#gate-offline-status').textContent=text;$('#retry-offline').hidden=!retry;}
+let offlineRegistration;const watchedRegistrations=new WeakSet();
+async function retryOffline(){
+ $('#retry-offline').disabled=true;offlineStatus('Saving offline files…');
+ try{offlineRegistration=await navigator.serviceWorker.register('./sw.js');watchOffline(offlineRegistration);await offlineRegistration.update();}
+ catch{offlineStatus('Offline download interrupted.',true);}
+ finally{$('#retry-offline').disabled=false;}
+}
+function watchOffline(reg){
+ if(watchedRegistrations.has(reg))return;watchedRegistrations.add(reg);
+ const ready=()=>offlineStatus('Ready offline.');
+ function update(){
+  if(reg.waiting&&navigator.serviceWorker.controller){$('#update-banner').hidden=false;offlineStatus('Update ready.');$('#update-button').onclick=()=>{
+   if($('#unlock-pin').value){$('#unlock-error').textContent='Finish or clear your PIN before updating.';return;}
+   if(saving||deviceBusy||$('#transaction-dialog').open||$('#pin-dialog').open||$('#save-recovery-dialog').open||$('#reset-pin-dialog').open||$('#device-dialog').open){notify('Save or close your form before updating.');return;}
+   if(storageUnavailable&&data.transactions.length){notify('Back up your session data before updating.');return;}reg.waiting.postMessage('SKIP_WAITING');
+  };}
+ }
+ function installing(){const worker=reg.installing;if(!worker)return;offlineStatus(reg.active?'Downloading update…':'Saving offline files…');worker.addEventListener('statechange',()=>{
+  if(worker.state==='redundant')offlineStatus(reg.active?'Update download interrupted.':'Offline download interrupted.',true);
+  else if(worker.state==='installed'){if(!reg.active)ready();update();}
+  else if(worker.state==='activated'){ready();update();}
+ });}
+ if(reg.active)ready();else offlineStatus('Saving offline files…');update();installing();reg.addEventListener('updatefound',installing);
+}
+$('#retry-offline').addEventListener('click',()=>void retryOffline());
+if('serviceWorker' in navigator&&window.isSecureContext){
+ navigator.serviceWorker.register('./sw.js').then(reg=>{offlineRegistration=reg;watchOffline(reg);}).catch(()=>offlineStatus('Offline download interrupted.',true));
+ let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!refreshing&&!$('#update-banner').hidden){refreshing=true;if(location.pathname.endsWith('/open.html'))location.replace(new URL('./',location.href));else location.reload();}});
+}else offlineStatus('Offline files need HTTPS or localhost.');
