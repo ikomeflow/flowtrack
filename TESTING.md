@@ -1,3 +1,7 @@
+# Version 1.12.2 — Futura Group producer branding
+
+App credits and producer metadata identify Futura Group. Settings and social previews use the same credit; the new preview has a fresh URL. Offline cache version updated. App addresses, storage keys, PINs, recovery settings and records are unchanged.
+
 # Version 1.12.1 — Ikomeflow branding and consistent loading colors
 
 Public app credits use Ikomeflow. PIN screens have no creator byline. Critical loading colors now match the fully loaded light/dark palette, so the primary blue and background do not change as workspace styles arrive. No storage, security, calculation or export logic changed.
