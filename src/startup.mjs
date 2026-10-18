@@ -5,9 +5,9 @@
  const slow=setTimeout(()=>{if(!ready){message.textContent='Slow connection. You can retry.';retry.hidden=false;}},8000);
  function failed(){if(ready)return;clearTimeout(slow);message.textContent='Download interrupted. Retry to open.';retry.hidden=false;}
  document.querySelector('#app-entry').addEventListener('error',failed);
- window.addEventListener('error',event=>{if(event.filename?.includes('app-v14.mjs'))failed();});
+ window.addEventListener('error',event=>{if(event.filename?.includes('app-v15.mjs'))failed();});
  function styles(){
-  clearTimeout(styleTimer);styleLink?.remove();styleTimer=setTimeout(()=>{document.querySelector('#style-alert').hidden=false;},8000);const link=document.createElement('link');styleLink=link;link.rel='stylesheet';link.href='./styles-v11.css';link.dataset.workspaceStyles='';
+  clearTimeout(styleTimer);styleLink?.remove();styleTimer=setTimeout(()=>{document.querySelector('#style-alert').hidden=false;},8000);const link=document.createElement('link');styleLink=link;link.rel='stylesheet';link.href='./styles-v12.css';link.dataset.workspaceStyles='';
   link.addEventListener('load',()=>{clearTimeout(styleTimer);document.documentElement.dataset.workspaceStyles='ready';document.querySelector('#style-alert').hidden=true;window.dispatchEvent(new Event('flowtrack-styles-ready'));});
   link.addEventListener('error',()=>{clearTimeout(styleTimer);document.querySelector('#style-alert').hidden=false;});document.head.append(link);
  }
