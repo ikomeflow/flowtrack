@@ -99,7 +99,7 @@ Use a dedicated origin for financial records if hosting other apps. All pages on
 
 ## Offline use and updates
 
-Version 1.12 uses `app-v14.mjs`, `styles-v11.css`, `vault-v8.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
+Version 1.12 uses `app-v15.mjs`, `styles-v12.css`, `vault-v8.mjs` and `device-v1.mjs` so older offline installations never mix a cached old script with new markup. Future incompatible shell releases need new asset filenames and a new service-worker cache version. Normal JSON backups retain the version-1 ledger schema. New protected storage uses a version-2 `flowtrack-vault` envelope; version-1 protected ledgers remain readable with their original PIN and can migrate through Settings. Do not downgrade a protected installation. The theme uses the separate `flowtrack.theme` key and is not part of backups. GitHub remains the public development repository; the user-facing app and portfolio page omit source-code links.
 
 Serve over HTTPS (or localhost). After the initial successful visit and service-worker activation, the local app shell is cached. The PIN screen and Settings report whether offline files are ready. The small PIN stylesheet is inline; the full workspace stylesheet loads after startup. Interrupted downloads expose Retry without changing the ledger. If an older cached copy is stuck before the PIN, open https://flowtrack.ikomeflow.com/open.html on the same browser and choose Update app if offered. This same-origin entry preserves existing browser records; do not clear site data. A first visit without internet cannot work. Installation does not create a cloud backup. Browser installation UX varies; Safari on iPhone/iPad supports Share → Add to Home Screen.
 
@@ -110,8 +110,8 @@ The app checks for service-worker updates during visits. A banner offers to appl
 ```text
 dist/                 Publish this folder, as-is
   index.html          Responsive UI and accessible dialogs
-  styles-v11.css      Minified light/dark visual system
-  app-v14.mjs          Bundled PIN, UI, downloads, PWA
+  styles-v12.css      Minified light/dark visual system
+  app-v15.mjs          Bundled PIN, UI, downloads, PWA
   vault-v8.mjs        Encrypted storage, device key wrapping, recovery
   device-v1.mjs       Platform WebAuthn PRF and verification checks
   theme.js            Legacy appearance bootstrap (current theme is inline)
@@ -139,3 +139,7 @@ New and reset PINs use exactly four digits. Existing 6–12 digit PINs still unl
 ## Install FlowTrack
 
 Choose **Install app** on the PIN screen or in Settings. Chrome and Edge can offer a native install prompt when eligible. On iPhone/iPad, use Safari → Share → Add to Home Screen. On Mac Safari, use File → Add to Dock. Installed mode hides the PIN-screen install link. Installation does not sync or back up records; open online once and wait for Ready offline, and keep JSON backups.
+
+## Slow connections
+
+The app works on slow links and keeps a complete offline copy after “Ready offline”. The first download prioritizes the visible screen before installation icons and optional tools. Icons are losslessly compressed. Saved reopening does not wait for a network connection. A first-ever visit still needs internet; keep the page open until offline preparation finishes. No features or data protection have been removed.

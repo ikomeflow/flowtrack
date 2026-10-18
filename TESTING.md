@@ -1,3 +1,9 @@
+# Version 1.13.1 — lighter downloads for slow connections
+
+The visible app files are cached before installation icons and optional tools. New script and stylesheet filenames keep old offline versions coherent. PNG icons use lossless compression with identical decoded pixels. Records, PIN protection, recovery, calculations and exports are unchanged.
+
+Controlled test: 50 kbit/s shared download, 1.2 s response delay per request, gzip, isolated fresh browser profile. First complete download changed from 59,179 to 53,339 bytes (about 10% less). PIN screen: 6.06 to 5.74 seconds; full styles: 9.77 to 9.29 seconds. Ready offline: 13.42 to 13.29 seconds; saved offline reopening: 0.24 seconds. These controlled measurements are not a promise for every real 2G network. Prioritizing the screen may slightly delay full offline setup.
+
 # Version 1.13.0 — installable Futura Group app
 
 Added installation help on the PIN screens and in Settings, native prompt handling, standalone detection, install icons and an updated offline shell. Ledger, PIN and recovery storage remain unchanged.
