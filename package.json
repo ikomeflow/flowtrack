@@ -1,9 +1,9 @@
 {
   "name": "flowtrack",
-  "version": "1.12.1",
+  "version": "1.12.2",
   "private": true,
   "type": "module",
-  "description": "Free, offline-first income and expense tracker by Ikomeflow",
+  "description": "Free, offline-first income and expense tracker by Futura Group",
   "license": "MIT",
   "scripts": {
     "start": "node server.mjs",
@@ -16,5 +16,6 @@
   },
   "devDependencies": {
     "esbuild": "0.28.2"
-  }
+  },
+  "author": "Futura Group"
 }
