@@ -135,3 +135,7 @@ Keep the app lightweight, usable on small screens and honest about privacy. Avoi
 
 New and reset PINs use exactly four digits. Existing 6–12 digit PINs still unlock their original records and backups; change them in Settings → PIN lock → Change PIN. Existing PINs are never truncated.
 
+
+## Install FlowTrack
+
+Choose **Install app** on the PIN screen or in Settings. Chrome and Edge can offer a native install prompt when eligible. On iPhone/iPad, use Safari → Share → Add to Home Screen. On Mac Safari, use File → Add to Dock. Installed mode hides the PIN-screen install link. Installation does not sync or back up records; open online once and wait for Ready offline, and keep JSON backups.
