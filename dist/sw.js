@@ -1,6 +1,6 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v18-20261018-install';
+const CACHE=PREFIX+'v19-20261018-simple-install';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
 const SHELL=['index.html','styles-v11.css','app-v14.mjs','device-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);

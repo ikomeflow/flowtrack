@@ -16,9 +16,11 @@ export function initInstall({name,onlineURL}) {
   document.querySelectorAll('[data-install-label]').forEach(e=>e.textContent=running||installed?'Installation':'Install app');
   button.hidden=running||installed||!prompt||portable;
   button.disabled=busy;
-  const help=running?`${name} is already running as an installed app.`:installed?'Installation completed. Open the app from your home screen or applications.':portable?'Open the online version to install this app.':prompt?`Install ${name} on this device. You can remove it later.`:ios?'Add this app from Safari on your iPhone or iPad.':android?'Install from your browser’s menu.':'Install from your browser’s menu.';
+  const help=running?`${name} is already running as an installed app.`:installed?'Your app is ready. Open it from the new icon on your phone or computer.':portable?'Open the online version to install this app.':prompt?`Install ${name} on this device. You can remove it later.`:'Add an app icon to this phone or computer. No file upload is needed.';
   status.textContent=help;
-  const instructions=ios?['Open this app address in Safari.','Tap Share, then Add to Home Screen.','Keep Open as Web App enabled if shown, then tap Add.']:android?['Open this app address in Chrome or Edge.','Open the browser menu and choose Install app or Add to Home screen.','Confirm Install or Add, then open the app icon.']:['In Chrome or Edge, use the install icon in the address bar or the browser’s app menu.','On a Mac using Safari, choose File → Add to Dock.','If opened inside another app, open this address in your regular browser first.'];
+  const instructions=ios?['Open this app in your browser.','Tap Share (the box with an arrow), then Add to Home Screen. You may need to scroll down.','Tap Add. You can now open the app from its icon on your home screen.']:android?['Open this app in your browser.','Tap the three dots (⋮) at the top. Choose Install app or Add to Home screen.','Tap Install or Add. Look for the app icon on your phone.']:['Open this app in your browser.','Open the browser menu at the top (three dots or three lines). Look for Install app, Install this page as an app, or Add to Dock.','Confirm Install or Add. Open the app from the new icon on your computer.'];
+  if(prompt)instructions.unshift('Tap the Install button above, then confirm Install.');
+  if(!prompt)instructions.push('Cannot see that option? You can keep using the app here in your browser.');
   steps.replaceChildren(...instructions.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
   steps.hidden=running||installed;
  }
@@ -34,7 +36,7 @@ export function initInstall({name,onlineURL}) {
   if(!prompt||busy)return;
   const current=prompt;prompt=null;busy=true;button.disabled=true;
   let message='';
-  try{await current.prompt();const choice=await current.userChoice;message=choice.outcome==='accepted'?'Installation requested. Confirm any remaining browser prompts.':'Installation cancelled. You can install later from your browser’s menu.';}
+  try{await current.prompt();const choice=await current.userChoice;message=choice.outcome==='accepted'?'One more step: confirm Install if your browser asks.':'You cancelled. You can try again whenever you are ready.';}
   catch{message='The browser could not open installation. Follow the steps below or try again later.';}
   finally{busy=false;refresh();if(!installed&&!standalone())status.textContent=message;}
  });
