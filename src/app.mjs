@@ -1,3 +1,5 @@
+import {initInstall} from './install.mjs';
+initInstall({name:'FlowTrack',onlineURL:'https://flowtrack.ikomeflow.com/'});
 // Optional device verification loads after the PIN gate can paint.
 let deviceApi,devicePromise;
 const getDeviceApi=()=>devicePromise||(devicePromise=import('./device-v1.mjs').then(api=>deviceApi=api).catch(error=>{devicePromise=null;throw error;}));
@@ -13,7 +15,7 @@ const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const paths={lock:'M6 10h12v11H6zM8 10V6a4 4 0 0 1 8 0v4',grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',arrows:'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4',calendar:'M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z',shield:'M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7z M8 12l3 3 5-6',plus:'M12 5v14M5 12h14',left:'m14 6-6 6 6 6',right:'m10 6 6 6-6 6',down:'M17 7 7 17M7 7v10h10',up:'M7 17 17 7M7 7h10v10',wallet:'M3 6h16v14H3zM3 6V3h13v3M15 11h6v5h-6z',help:'M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20',pie:'M11 3v10h10A10 10 0 1 1 11 3zM15 2v7h7a9 9 0 0 0-7-7',search:'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14M15 15l6 6',download:'M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5',close:'m6 6 12 12M18 6 6 18',edit:'m15 4 5 5M4 20l4-1L21 6l-4-4L4 15z',trash:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7'};
 const icon=name=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.wallet}"/></svg>`;
 function icons(){ $$('[data-icon]').forEach(el=>{el.innerHTML=icon(el.dataset.icon);}); }
-let data=emptyState(),demo=null,corrupt=false,storageUnavailable=false,recoveryRaw='',month=today().slice(0,7),selectedDate=today(),editingId=null,toastTimer,installPrompt,confirmResolve,toastMessage='',toastDeadline=0,pendingDeletion=null;
+let data=emptyState(),demo=null,corrupt=false,storageUnavailable=false,recoveryRaw='',month=today().slice(0,7),selectedDate=today(),editingId=null,toastTimer,confirmResolve,toastMessage='',toastDeadline=0,pendingDeletion=null;
 const state=()=>demo||data;
 const fmt=n=>money(n,state().currency);
 function refreshToast(){
@@ -181,9 +183,6 @@ window.addEventListener('storage',e=>{
 });
 function connection(){ $('#connection').innerHTML=`<span></span>${navigator.onLine?'Local':'Offline'}`; }
 window.addEventListener('online',connection);window.addEventListener('offline',connection);
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('#install-button').hidden=false;});
-$('#install-button').addEventListener('click',async()=>{if(!installPrompt)return;await installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('#install-button').hidden=true;});
-window.addEventListener('appinstalled',()=>{$('#install-button').hidden=true;notify('FlowTrack installed. Your records remain on this device.');});
 function securityStatus(){
  const enabled=vault.enabled;$('#lock-button').hidden=!enabled;
  $('#pin-enable').hidden=enabled;$('#pin-change').hidden=!enabled;$('#pin-disable').hidden=true;$('#pin-disable').disabled=true;
@@ -341,7 +340,7 @@ function watchOffline(reg){
  function update(){
   if(reg.waiting&&navigator.serviceWorker.controller){$('#update-banner').hidden=false;offlineStatus('Update ready.');$('#update-button').onclick=()=>{
    if($('#unlock-pin').value){$('#unlock-error').textContent='Finish or clear your PIN before updating.';return;}
-   if(saving||deviceBusy||$('#transaction-dialog').open||$('#pin-dialog').open||$('#save-recovery-dialog').open||$('#reset-pin-dialog').open||$('#device-dialog').open){notify('Save or close your form before updating.');return;}
+   if(saving||deviceBusy||$('#transaction-dialog').open||$('#pin-dialog').open||$('#save-recovery-dialog').open||$('#reset-pin-dialog').open||$('#device-dialog').open||$('#install-dialog').open){notify('Save or close your form before updating.');return;}
    if(storageUnavailable&&data.transactions.length){notify('Back up your session data before updating.');return;}reg.waiting.postMessage('SKIP_WAITING');
   };}
  }
