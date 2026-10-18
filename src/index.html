@@ -2,23 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#1557e8"><meta name="description" content="Your money, in view. A free application to track income and expenses. Simple, private, and ready when you are.">
+  <meta name="author" content="Futura Group">
+  <meta name="application-name" content="FlowTrack">
+  <meta name="theme-color" content="#1557e8"><meta name="description" content="Your money, in view. A free application to track income and expenses. Simple, private, and ready when you are. Produced by Futura Group.">
   <link rel="canonical" href="https://flowtrack.ikomeflow.com/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="FlowTrack">
   <meta property="og:url" content="https://flowtrack.ikomeflow.com/">
   <meta property="og:title" content="FlowTrack — Track income &amp; expenses. Free.">
-  <meta property="og:description" content="Your money, in view. A free application to track income and expenses. Simple, private, and ready when you are.">
-  <meta property="og:image" content="https://flowtrack.ikomeflow.com/share-card-v2.png">
-  <meta property="og:image:secure_url" content="https://flowtrack.ikomeflow.com/share-card-v2.png">
+  <meta property="og:description" content="Your money, in view. A free application to track income and expenses. Simple, private, and ready when you are. Produced by Futura Group.">
+  <meta property="og:image" content="https://flowtrack.ikomeflow.com/share-card-v3.png">
+  <meta property="og:image:secure_url" content="https://flowtrack.ikomeflow.com/share-card-v3.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="FlowTrack application. Track income. Manage expenses. Free. By Ikomeflow.">
+  <meta property="og:image:alt" content="FlowTrack application. Track income. Manage expenses. Free. By Futura Group.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="FlowTrack — Track income &amp; expenses. Free.">
-  <meta name="twitter:description" content="Your money, in view. A free application to track income and expenses. Simple, private, and ready when you are.">
-  <meta name="twitter:image" content="https://flowtrack.ikomeflow.com/share-card-v2.png">
+  <meta name="twitter:description" content="Your money, in view. A free application to track income and expenses. Simple, private, and ready when you are. Produced by Futura Group.">
+  <meta name="twitter:image" content="https://flowtrack.ikomeflow.com/share-card-v3.png">
   <meta name="twitter:image:alt" content="FlowTrack application. Track income. Manage expenses. Free.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' __THEME_CSP__ __STARTUP_CSP__; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>FlowTrack — Track income &amp; expenses. Free.</title>
@@ -42,7 +44,7 @@
     <button type="button" id="mobile-add"><span data-icon="plus"></span><span>Add</span></button>
     <a href="#settings" data-view="settings"><span data-icon="settings"></span> Settings</a>
   </nav>
-  
+
 </aside>
 <div class="workspace">
   <header class="topbar"><span class="breadcrumb" id="breadcrumb">Home</span><a class="mobile-brand brand" href="#overview"><img src="./icon.svg" width="30" height="30" alt="">FlowTrack.</a><div class="top-actions"><button class="icon-button" id="lock-button" aria-label="Lock FlowTrack" title="Lock now" data-icon="lock" hidden></button><span class="connection" id="connection"><span></span> Local</span><button class="icon-button theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.8 13A9 9 0 0 1 11 3.2 9 9 0 1 0 20.8 13Z"/></svg><svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button></div></header>
@@ -52,7 +54,7 @@
   <main id="main" tabindex="-1">
     <div class="page-heading"><div><h1 id="page-title">Home</h1></div><div id="heading-month"><div class="month-control"><button class="icon-button prev-month" aria-label="Previous month" data-icon="left"></button><label class="sr-only" for="overview-month">Overview month</label><span class="month-picker"><span id="overview-month-label" aria-hidden="true"></span><input type="month" id="overview-month" min="1900-01" max="9999-12"></span><button class="icon-button next-month" aria-label="Next month" data-icon="right"></button></div></div><button class="button primary" id="add-button"><span data-icon="plus"></span> Add</button></div>
     <div id="overview-view" class="view">
-      
+
       <div class="stats-grid">
         <article class="stat net"><div class="stat-top"><span>Monthly balance</span></div><strong id="net-value">—</strong><div class="net-decoration" aria-hidden="true"></div></article>
         <article class="stat"><div class="stat-top"><span>Income</span><span class="stat-icon income" data-icon="down"></span></div><strong id="income-value">—</strong></article>
@@ -69,9 +71,9 @@
     <div id="settings-view" class="view" hidden>
       <div class="settings-grid"><section class="panel settings-panel"><h2>Preferences</h2><label for="currency">Currency</label><select id="currency"></select><p class="hint">Labels only. No conversion.</p><details class="settings-group" id="security-settings"><summary>PIN lock</summary><div class="settings-content"><h3 class="sr-only">PIN lock</h3><p id="pin-status" class="hint">Off</p><div class="pin-actions"><button class="button secondary" id="pin-enable">Set PIN</button><button class="button secondary" id="pin-change" hidden>Change PIN</button><button class="text-link" id="pin-disable" hidden>Turn off</button><button class="text-link" id="pin-recovery" hidden>Set up recovery</button></div><p id="recovery-status" class="hint" hidden></p><p class="hint">Locks after 30 minutes idle. Recovery is optional in Settings.</p><div class="device-settings"><h3>Quick unlock</h3><p id="device-status" class="hint">Checking this device…</p><button class="button secondary" id="device-enable" hidden>Enable quick unlock</button><button class="text-link" id="device-remove" hidden>Remove device unlock</button></div></div></details><details class="settings-details settings-group"><summary>Install app</summary><p id="install-description">On a supported browser, use its menu to install the app. On iPhone or iPad, use Safari → Share → Add to Home Screen. Open online once before using offline.</p></details><button id="install-button" class="button secondary" hidden>Install FlowTrack</button><p id="offline-status" class="hint"></p></section>
       <section class="panel settings-panel data-panel"><details class="settings-group" id="backup-settings"><summary>Backup &amp; export</summary><div class="settings-content"><div class="setting-action"><div><h3>Backup</h3><p>Unencrypted JSON. Keep it private.</p></div><button class="button secondary" id="backup-button">Back up</button></div><div class="setting-action"><div><h3>Restore</h3><p>Replace this ledger with a JSON backup.</p></div><button class="button secondary" id="restore-button">Restore</button><input type="file" id="restore-file" accept=".json,application/json" hidden></div><div class="setting-action"><div><h3>Spreadsheet</h3><p>All transactions as CSV. For restore, use JSON.</p></div><button class="button secondary" id="export-all">Export CSV</button></div><button class="text-link" id="recovery-button" hidden>Download unreadable local data for recovery</button></div></details><details class="settings-group" id="advanced-settings"><summary>Clear data</summary><div class="setting-action danger-zone"><div><h3>Clear data</h3><p>Permanently remove this browser’s ledger. Make a backup first.</p></div><button class="button danger" id="clear-button">Clear data</button></div></details></section>
-      <section class="panel privacy-panel"><details class="settings-group"><summary>Privacy &amp; backups</summary><p>FlowTrack sends no transaction data anywhere. There are no accounts, analytics, ads, trackers, or cloud sync. Records stay in this browser. A PIN encrypts the local ledger after setup. Existing unprotected records stay unchanged until their owner completes setup. Optional device unlock uses a passkey to open the encrypted ledger on compatible devices; FlowTrack never receives face images or fingerprints. Passkey providers may sync the passkey, but FlowTrack does not sync records. A short PIN can still be guessed by someone who obtains the locked file. It does not protect an unlocked device, malicious extensions, or malware.</p><p>Clearing site data, private browsing, browser cleanup, or losing this device can erase your records. JSON backups and CSV exports are not protected by the PIN; keep them private. Save a recovery key before you forget the PIN. It can reset the PIN without deleting records. Anyone with that key can access your locked ledger; keep it separate and private. Without the PIN, a previously saved recovery key, or a separate JSON backup, we cannot recover the records. A locked copy needs its PIN or matching recovery key. A different browser or website address has a separate ledger. Your hosting provider may receive standard web request logs when the app loads.</p><p>Free to use. By <a href="https://ikomeflow.com" target="_blank" rel="noopener">Ikomeflow</a>.</p></details></section><button class="text-link demo-link" id="demo-button">Try with sample data</button></div>
+      <section class="panel privacy-panel"><details class="settings-group"><summary>Privacy &amp; backups</summary><p>FlowTrack sends no transaction data anywhere. There are no accounts, analytics, ads, trackers, or cloud sync. Records stay in this browser. A PIN encrypts the local ledger after setup. Existing unprotected records stay unchanged until their owner completes setup. Optional device unlock uses a passkey to open the encrypted ledger on compatible devices; FlowTrack never receives face images or fingerprints. Passkey providers may sync the passkey, but FlowTrack does not sync records. A short PIN can still be guessed by someone who obtains the locked file. It does not protect an unlocked device, malicious extensions, or malware.</p><p>Clearing site data, private browsing, browser cleanup, or losing this device can erase your records. JSON backups and CSV exports are not protected by the PIN; keep them private. Save a recovery key before you forget the PIN. It can reset the PIN without deleting records. Anyone with that key can access your locked ledger; keep it separate and private. Without the PIN, a previously saved recovery key, or a separate JSON backup, we cannot recover the records. A locked copy needs its PIN or matching recovery key. A different browser or website address has a separate ledger. Your hosting provider may receive standard web request logs when the app loads.</p><p>Free to use. Produced by <a href="https://futuragroup.io/" target="_blank" rel="noopener">Futura Group</a>.</p></details></section><button class="text-link demo-link" id="demo-button">Try with sample data</button></div>
     </div>
-    <footer><a href="https://ikomeflow.com" target="_blank" rel="noopener">By Ikomeflow ↗</a></footer>
+    <footer><a href="https://futuragroup.io/" target="_blank" rel="noopener">By Futura Group ↗</a></footer>
   </main>
 </div>
 </div>
