@@ -1,6 +1,6 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v15-20261017-reliable-start';
+const CACHE=PREFIX+'v16-20261017-ikomeflow';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
 const SHELL=['index.html','styles-v11.css','app-v14.mjs','device-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'].map(p=>new URL(p,BASE).href);
