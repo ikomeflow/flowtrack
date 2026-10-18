@@ -1,3 +1,13 @@
+## Version 1.12 startup reliability verification — 17 October 2026
+
+- **47 unit tests and 224 browser assertions passed**: 59 general, 24 PIN, 19 recovery, 29 virtual-device, 55 mobile, 22 performance/upgrade and 16 startup/failure checks. Synthetic records and isolated profiles only.
+- In the controlled gzip comparison (400 ms latency, 50 KB/s, 4× CPU slowdown), the previous 1.11 PIN gate appeared at 1931 ms and 1.12 at 1602 ms, about 17% faster. Cached stalled-connection reloads completed at 309 ms and 282 ms respectively. These timings describe this test run, not every network.
+- The PIN gate remains usable with the full workspace stylesheet deliberately stalled. Authenticated content waits for styling; it resumes when CSS arrives. Widths 320, 390, 768 and 1440 have no horizontal overflow.
+- Failed main-script and stylesheet downloads expose working Retry controls. Offline installation failures can be retried while locked. Status and Update app are visible before unlocking.
+- The same-origin open.html entry bypasses the exact previous release's cached root. Applying its update preserves stored ciphertext byte-for-byte and returns to the canonical root. Partial PIN entry blocks update reload. The entry also works offline after the new cache is installed.
+- Previous-release upgrade checks preserve all 250 encrypted records, complete CSV output, open-draft guards and failed-candidate fallback. PIN, recovery and device protection modules are unchanged. Physical Safari/iOS and real biometric hardware were not tested.
+- Run `node tests/startup-browser.mjs` for the new loading/failure suite and `node tests/performance-browser.mjs` for the isolated prior-release comparison.
+
 ## Version 1.11 performance verification — 17 October 2026
 
 - **47 unit tests**: 41 existing calculation, storage, PIN, recovery and device tests plus six service-worker tests.
