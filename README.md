@@ -1,5 +1,10 @@
 # FlowTrack
 
+## First-visit loading recovery
+
+The inline loading and Retry bootstrap starts immediately after the loading screen, before the remaining page arrives. Slow document downloads no longer delay the recovery timer. Main-module, dependency and initialization failures show Retry instead of leaving startup stuck. No financial records, PINs or recovery keys are read or changed by this bootstrap.
+
+
 **Your money, in view.** Free, open-source income and expense tracking for young Africans and anyone building better money habits. Produced by [Futura Group](https://futuragroup.io/), in minimal blue and white.
 
 No signup, backend, external fonts, analytics, or runtime dependencies. A small web app using HTML, CSS and JavaScript. Published files are bundled and minified at build time; the app needs no runtime packages. MIT licensed.
