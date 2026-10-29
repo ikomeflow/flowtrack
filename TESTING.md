@@ -1,3 +1,11 @@
+# Version 1.14.0 — PDF history and visible tags
+
+Build and syntax checks passed. All 51 unit tests passed, including new PDF structure, font embedding, pagination beyond 100 results, cancellation after a ledger change, and offline caching of the PDF module. The existing PIN, recovery, device and calculation tests remain green.
+
+Chrome checks on a separate local origin with synthetic encrypted records: a real 120-entry PDF download, a 20-entry search download, no-result export disabled, visible tags in the add/edit form, wrapping five-tag rows, and narrow phone layout without horizontal scrolling. An independent PDF reader verified all entries, search scope, totals, accented text, repeated table headers and page numbers. Rendered first/continuation pages were visually checked, including local CJK/emoji fallback. No real financial records were created or changed. JSON backup/restore remains separate from PDF history.
+
+PDF creation and the bundled font work without external service requests. The PDF code loads on demand and is part of the offline shell. Scripts not covered by the embedded font are preserved visually with local system-font images; those specific text runs are not selectable. The optional browser and performance suites now expect PDF downloads and visible tag input; these full suites were not rerun for this release.
+
 # Version 1.13.1 — lighter downloads for slow connections
 
 The visible app files are cached before installation icons and optional tools. New script and stylesheet filenames keep old offline versions coherent. PNG icons use lossless compression with identical decoded pixels. Records, PIN protection, recovery, calculations and exports are unchanged.

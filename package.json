@@ -1,6 +1,6 @@
 {
   "name": "flowtrack",
-  "version": "1.13.1",
+  "version": "1.14.0",
   "private": true,
   "type": "module",
   "description": "Free, offline-first income and expense tracker by Futura Group",
@@ -15,7 +15,8 @@
     "node": ">=20"
   },
   "devDependencies": {
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "jspdf": "^4.2.1"
   },
   "author": "Futura Group"
 }
