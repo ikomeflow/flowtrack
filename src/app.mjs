@@ -8,7 +8,7 @@ const createDeviceUnlock=async options=>(await getDeviceApi()).createDeviceUnloc
 const unlockWithDevice=async(descriptor,options)=>(await getDeviceApi()).unlockWithDevice(descriptor,options);
 const deviceError=error=>deviceApi?deviceApi.deviceError(error):error?.message||'Device unlock unavailable. Use your PIN.';
 import {LedgerVault,isVault,validateVault} from '../dist/vault-v8.mjs';
-import { STORAGE_KEY,CURRENCIES,today,parseAmount,validateTransaction,validateState,emptyState,totals,filterTransactions,money,shiftMonth,csvExport } from '../dist/core-v2.mjs';
+import { STORAGE_KEY,CURRENCIES,today,parseAmount,validateTransaction,validateState,emptyState,totals,filterTransactions,money,shiftMonth } from '../dist/core-v2.mjs';
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -65,7 +65,7 @@ function monthLabel(m,opts={month:'short'}){return dateLabel(m+'-01',opts);}
 function empty(title,message,add=false){return `<div class="empty"><span class="empty-icon">${icon('arrows')}</span><h3>${escape(title)}</h3><p>${escape(message)}</p>${add?'<button class="button primary" data-add>Add transaction</button>':''}</div>`;}
 function table(rows,emptyText='No transactions yet',add=false){
  if(!rows.length)return empty(emptyText,add?'Tap + Add to start.':'Try another date or search.');
- return `<div class="entry-list">${rows.map(t=>`<button class="entry-row" data-edit="${escape(t.id)}" aria-label="Edit ${escape(t.description)}"><span class="transaction-icon ${t.type}">${icon(t.type==='income'?'down':'up')}</span><span class="entry-copy"><span class="transaction-description">${escape(t.description)}</span><span class="entry-date">${escape(dateLabel(t.date,{day:'numeric',month:'short',year:'numeric'}))}${t.tags.length?' · '+escape(t.tags.join(', ')):''}</span></span><span class="entry-amount ${t.type==='income'?'positive':''}">${t.type==='income'?'+':'−'}${escape(fmt(t.amount))}</span></button>`).join('')}</div>`;
+ return `<div class="entry-list">${rows.map(t=>`<button class="entry-row" data-edit="${escape(t.id)}"><span class="sr-only">Edit </span><span class="transaction-icon ${t.type}">${icon(t.type==='income'?'down':'up')}</span><span class="entry-copy"><span class="transaction-description">${escape(t.description)}</span><span class="entry-date">${escape(dateLabel(t.date,{day:'numeric',month:'short',year:'numeric'}))}</span>${t.tags.length?`<span class="entry-tags"><span class="sr-only">Tags: </span>${t.tags.map(tag=>`<span class="entry-tag">${escape(tag)}</span>`).join('')}</span>`:''}</span><span class="entry-amount ${t.type==='income'?'positive':''}">${t.type==='income'?'+':'−'}${escape(fmt(t.amount))}</span></button>`).join('')}</div>`;
 }
 function overview(){
  const rows=filterTransactions(state().transactions,{month}),sum=totals(rows);
@@ -75,7 +75,7 @@ function overview(){
 }
 function filtered(){return filterTransactions(state().transactions,{month:$('#period-filter').value==='month'?month:'',query:$('#search').value,type:$('#type-filter').value});}
 let historyLimit=100,historyFilterKey='';
-function history(){const rows=filtered(),key=JSON.stringify([month,$('#period-filter').value,$('#search').value,$('#type-filter').value]);if(key!==historyFilterKey){historyLimit=100;historyFilterKey=key;}$('#result-count').textContent=rows.length+' '+(rows.length===1?'transaction':'transactions');$('#transaction-list').innerHTML=table(rows.slice(0,historyLimit),'No matching transactions')+(rows.length>historyLimit?'<div class="history-more"><p>Showing '+Math.min(historyLimit,rows.length)+' of '+rows.length+'</p><button class="button secondary" data-more-history>Show 100 more</button></div>':'');$('#history-month').disabled=$('#period-filter').value==='all';}
+function history(){const rows=filtered(),key=JSON.stringify([month,$('#period-filter').value,$('#search').value,$('#type-filter').value]);if(key!==historyFilterKey){historyLimit=100;historyFilterKey=key;}$('#result-count').textContent=rows.length+' '+(rows.length===1?'transaction':'transactions');$('#export-filtered').disabled=!rows.length||exporting;$('#transaction-list').innerHTML=table(rows.slice(0,historyLimit),'No matching transactions')+(rows.length>historyLimit?'<div class="history-more"><p>Showing '+Math.min(historyLimit,rows.length)+' of '+rows.length+'</p><button class="button secondary" data-more-history>Show 100 more</button></div>':'');$('#history-month').disabled=$('#period-filter').value==='all';}
 function calendar(){
  const [y,m]=month.split('-').map(Number),first=new Date(y,m-1,1).getDay(),days=new Date(y,m,0).getDate();
  let html=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="weekday">${d}</div>`).join('')+'<div aria-hidden="true"></div>'.repeat(first);
@@ -101,7 +101,7 @@ window.addEventListener('hashchange',()=>route());
 
 function openTransaction(id=null,date=null){
  if(vault.locked||$('#app-shell').hidden)return;if(corrupt&&!demo){notify('Recover your saved data from Settings first.');return;}
- const t=id?state().transactions.find(x=>x.id===id):null;editingId=t?.id||null;$('#transaction-form').reset();$('#transaction-title').textContent=t?'Edit transaction':'Add transaction';$('#save-button').textContent=t?'Save changes':'Save';$('#delete-transaction').hidden=!t;$('#transaction-options').open=!!t&&(t.tags.length>0||t.date!==today());$('#description').value=t&&t.description!==defaultDescription(t.type)?t.description:'';$('#amount').value=t?(t.amount/100).toFixed(2):'';$('#date').value=t?.date||date||today();$('#tags').value=t?.tags.join(', ')||'';$('#amount-currency').textContent=state().currency;$('#form-error').textContent='';$(`input[name=type][value=${t?.type||'expense'}]`).checked=true;$('#transaction-dialog').showModal();$('#amount').focus();
+ const t=id?state().transactions.find(x=>x.id===id):null;editingId=t?.id||null;$('#transaction-form').reset();$('#transaction-title').textContent=t?'Edit transaction':'Add transaction';$('#save-button').textContent=t?'Save changes':'Save';$('#delete-transaction').hidden=!t;$('#transaction-options').open=!!t&&t.date!==today();$('#description').value=t&&t.description!==defaultDescription(t.type)?t.description:'';$('#amount').value=t?(t.amount/100).toFixed(2):'';$('#date').value=t?.date||date||today();$('#tags').value=t?.tags.join(', ')||'';$('#amount-currency').textContent=state().currency;$('#form-error').textContent='';$(`input[name=type][value=${t?.type||'expense'}]`).checked=true;$('#transaction-dialog').showModal();$('#amount').focus();
 }
 $('#add-button').addEventListener('click',()=>openTransaction());$('#mobile-add').addEventListener('click',()=>openTransaction());$('#add-day').addEventListener('click',()=>openTransaction(null,selectedDate));$$('.close-transaction').forEach(b=>b.addEventListener('click',()=>$('#transaction-dialog').close()));
 $('#date').addEventListener('invalid',()=>$('#transaction-options').open=true);
@@ -135,8 +135,22 @@ $('#undo-delete').addEventListener('click',async()=>{
 
 $('#search').addEventListener('input',history);$('#type-filter').addEventListener('change',history);$('#period-filter').addEventListener('change',history);
 function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exportCSV(rows){download(csvExport(rows,state().currency),`flowtrack${demo?'-demo':''}-${today()}.csv`,'text/csv;charset=utf-8');notify(`Exported ${rows.length} transactions. Keep this file private.`);}
-$('#export-all').addEventListener('click',()=>exportCSV(state().transactions));$('#export-filtered').addEventListener('click',()=>exportCSV(filtered()));
+let exporting=false;
+async function exportPDF(all=false){
+ if(exporting||vault.locked||needsSetup())return;
+ const snapshot=state(),sample=!!demo,rows=all?filterTransactions(snapshot.transactions):filtered();
+ if(!rows.length){notify('No transactions to download.');return;}
+ const filters=all?{period:'All time',type:'All types',query:''}:{period:$('#period-filter').value==='month'?monthLabel(month,{month:'long',year:'numeric'}):'All time',type:$('#type-filter').selectedOptions[0].textContent,query:$('#search').value.trim()};
+ const current=()=>!vault.locked&&state()===snapshot;
+ exporting=true;for(const id of ['export-all','export-filtered']){$('#'+id).disabled=true;$('#'+id).setAttribute('aria-busy','true');}notify('Preparing PDF…');
+ try{
+  const {createHistoryPDF}=await import('./history-pdf-v1.mjs');if(!current())return;
+  const pdf=await createHistoryPDF(rows,snapshot.currency,{...filters,sample,isCurrent:current});if(!current())return;
+  download(pdf,`flowtrack${sample?'-sample':''}-history-${today()}.pdf`,'application/pdf');notify('PDF downloaded. Keep it private.');
+ }catch(error){if(current())notify(error.name==='AbortError'?'PDF cancelled.':'Could not create the PDF. Please try again.');}
+ finally{exporting=false;$('#export-all').disabled=false;$('#export-filtered').disabled=!filtered().length;for(const id of ['export-all','export-filtered'])$('#'+id).removeAttribute('aria-busy');}
+}
+$('#export-all').addEventListener('click',()=>exportPDF(true));$('#export-filtered').addEventListener('click',()=>exportPDF());
 $('#backup-button').addEventListener('click',()=>{if(corrupt&&!demo){notify('Download the unreadable original using the recovery link first.');return;}download(JSON.stringify(state(),null,2),`flowtrack${demo?'-demo':''}-backup-${today()}.json`,'application/json');notify('Backup downloaded. Keep it somewhere safe and private.');});
 $('#recovery-button').addEventListener('click',()=>download(recoveryRaw,`flowtrack-recovery-${today()}.txt`,'text/plain'));
 $('#restore-button').addEventListener('click',()=>$('#restore-file').click());
