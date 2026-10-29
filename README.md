@@ -1,5 +1,11 @@
 # FlowTrack
 
+## PDF history and visible tags (1.14)
+
+History downloads a PDF of every matching transaction, including results beyond the first 100 displayed. It includes search/type/period, date range, income, expenses, net change, full descriptions, tags and page numbers. Settings downloads the full history as PDF. JSON remains a separate restore backup. PDFs are generated locally, without uploading records, and the PDF module and bundled Noto Sans font are saved with the offline shell. Normal text is selectable; characters outside the bundled font use local system-font images.
+
+Tags are always visible in the add/edit form and appear as subdued labels in Home, History and Calendar. Date stays under Change date.
+
 ## First-visit loading recovery
 
 The inline loading and Retry bootstrap starts immediately after the loading screen, before the remaining page arrives. Slow document downloads no longer delay the recovery timer. Main-module, dependency and initialization failures show Retry instead of leaving startup stuck. No financial records, PINs or recovery keys are read or changed by this bootstrap.
@@ -7,7 +13,7 @@ The inline loading and Retry bootstrap starts immediately after the loading scre
 
 **Your money, in view.** Free, open-source income and expense tracking for young Africans and anyone building better money habits. Produced by [Futura Group](https://futuragroup.io/), in minimal blue and white.
 
-No signup, backend, external fonts, analytics, or runtime dependencies. A small web app using HTML, CSS and JavaScript. Published files are bundled and minified at build time; the app needs no runtime packages. MIT licensed.
+No signup, backend, external font requests or analytics. A small web app using HTML, CSS and JavaScript. Published files are bundled and minified at build time; the app needs no runtime packages. MIT licensed.
 
 Live app: [flowtrack.ikomeflow.com](https://flowtrack.ikomeflow.com/) · [Project page](https://ikomeflow.com/flowtrack/) · [GitHub source](https://github.com/ikomeflow/flowtrack)
 
@@ -17,7 +23,7 @@ See [WordPress integration notes](wordpress/INTEGRATION.md) for the current depl
 
 After the first complete download, reopening uses the saved matching HTML and app files immediately, even if the connection stalls. A new service worker downloads a complete update in the background. The existing Update button applies it together, after open forms are closed; an incomplete download keeps the old version available. No ledger key, PIN format, recovery route or encryption setting changed.
 
-The theme bootstrap is included in the page and authorized with an exact CSP hash. One compact startup bundle replaces the previous module request chain. Optional device verification loads after the PIN gate can paint. Home prepares its own totals and recent entries; History and Calendar render when opened. History initially displays 100 matching transactions, with “Show 100 more”; searches and CSV/JSON exports still cover all records.
+The theme bootstrap is included in the page and authorized with an exact CSP hash. One compact startup bundle replaces the previous module request chain. Optional device verification loads after the PIN gate can paint. Home prepares its own totals and recent entries; History and Calendar render when opened. History initially displays 100 matching transactions, with “Show 100 more”; searches, PDF histories and JSON backups still cover all records.
 
 A controlled local test with 400 ms latency, 50 KB/s download and 4× CPU slowdown reached the PIN gate in **4.23 seconds before / 2.07 seconds after**. With the document network request stalled, the old reload did not finish within 2.5 seconds; the new cached reload opened in **0.39 seconds**. These are test-environment measurements, not a guarantee for every device or connection.
 
@@ -31,11 +37,11 @@ To rebuild the committed files, run `npm ci` then `npm run build`. Source is und
 - **Forgot PIN → Recover PIN** uses a recovery key saved beforehand and preserves every record. Existing PIN users can add recovery from Settings after unlocking once. Recovering or changing a PIN keeps the existing recovery code. Only replacing a recovery key issues a fresh code to save.
 - Light and dark modes from the sun/moon button. Follows the device appearance initially; an explicit choice is saved separately from the ledger, works offline, and synchronizes between tabs.
 - Three main destinations: **Home, History and Settings**. On phones, Add is a separate action in the bottom navigation. Safe-area padding protects the iPhone home indicator, the month selector shares the Home heading row, and a readable caption opens the native month picker. Calendar controls stack on narrow screens; phone inputs use at least 16px text to avoid focus zoom. Home shows the monthly balance, smaller income/expense totals and five recent entries, without charts or extra cards.
-- **+ Add** starts with amount and defaults to Expense. Description is optional; a blank description is saved as Expense or Income, keeping backups compatible. Date defaults to today; date and up to five tags stay under **More options**. One Save updates totals and closes the form. Tap an entry to edit it. Delete acts immediately and offers Undo for 30 seconds after the latest deletion; Undo restores the current batch of recent deletions, preserving other edits and additions. Undo is temporary in-memory state: locking, refreshing, importing, clearing, another tab changing the ledger, or switching demo mode discards it. Export backups regularly. Clear-all and restore still require confirmation.
+- **+ Add** starts with amount and defaults to Expense. Description is optional; a blank description is saved as Expense or Income, keeping backups compatible. Date defaults to today; up to five optional tags are visible, and date stays under **Change date**. One Save updates totals and closes the form. Tap an entry to edit it. Delete acts immediately and offers Undo for 30 seconds after the latest deletion; Undo restores the current batch of recent deletions, preserving other edits and additions. Undo is temporary in-memory state: locking, refreshing, importing, clearing, another tab changing the ledger, or switching demo mode discards it. Export backups regularly. Clear-all and restore still require confirmation.
 - History searches descriptions/tags across all dates by default. New additions appear first within the same day, using ledger insertion order instead of random IDs. Type and month filters expand on demand. The calendar icon opens daily history; its back arrow returns to the list.
 - Settings keeps currency visible, with PIN, installation, backup/export, clear-data and privacy details grouped into expandable rows. Sample data is available from Settings and never changes the personal ledger.
 - African and global currency choices, default XAF. **Display only: changing currency relabels the whole ledger and never converts any amounts.** Each ledger has one currency. All currencies display two decimals for consistent entry; this is a personal tracker, not a payment processor.
-- CSV export of all records or current search results, with spreadsheet-formula neutralization. JSON backup and validated restore.
+- PDF history for all records or current search results. Separate JSON backup and validated restore.
 - Browser-local persistence and a PWA app shell that works offline after the first successful online load. App-install support depends on the browser.
 - Accessible labels, keyboard controls, full-row transaction buttons, semantic dialogs and reduced-motion support.
 
@@ -94,7 +100,7 @@ Replacing recovery or removing device unlock issues a new recovery code and remo
 
 **A local privacy lock has limits.** A short numeric PIN can be guessed offline by someone who obtains the locked file; UI delays cannot prevent that attack. A recovery key grants access to its matching ledger, so store it separately and privately. This does not protect an unlocked browser, malicious extensions, malware, or compromised same-origin JavaScript, and cannot securely erase earlier plaintext from disk history or backups. Protect the device itself; the app uses a four-digit PIN. Without the PIN, a matching recovery key saved beforehand, or a separate normal JSON backup, encrypted records cannot be recovered.
 
-Normal JSON backups and CSV exports are **unencrypted**, including when PIN lock is on. Keep them private. A locked copy is restorable with its matching PIN or recovery key; older copies keep their own keys. The destructive device reset is separate from key-based PIN recovery, requires confirmation and erases records; a separate normal JSON backup can then restore them. Cancellation preserves the original.
+Normal JSON backups and PDF histories are **unencrypted**, including when PIN lock is on. Keep them private. A locked copy is restorable with its matching PIN or recovery key; older copies keep their own keys. The destructive device reset is separate from key-based PIN recovery, requires confirmation and erases records; a separate normal JSON backup can then restore them. Cancellation preserves the original.
 
 There is no recovery service, account, cross-device sync or cloud backup. Clearing browser/site data, private browsing, device loss or browser cleanup can erase records. Moving between localhost, GitHub Pages, a custom domain or a different browser creates a separate ledger. Use **Settings → Back up** regularly, keep the JSON file privately, and restore it on the new address or device. CSV is for spreadsheets, not restoration. Protect downloaded exports: they contain readable financial data.
 
