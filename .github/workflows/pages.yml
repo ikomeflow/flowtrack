@@ -25,6 +25,7 @@ jobs:
       - run: npm run build
       - run: npm run check
       - run: npm test
+      - run: php -l wordpress/flowtrack-analytics/flowtrack-analytics.php && php tests/analytics-collector.php
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
