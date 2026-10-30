@@ -1,3 +1,11 @@
+# Hostinger subscription release — local verification, 30 October 2026
+
+54 Node app tests, 25 PHP service checks, four SMTP checks and 11 HTTP security checks passed locally. Build and syntax checks passed. The PHP checks use a disposable SQLite database and PHP 8.5. Hostinger accepted the six-table MySQL schema and owner registration. Nine hosted security checks passed, including HTTPS cookies, exact CORS, CSRF and anonymous access denial. The account-only page was deployed by Actions run 41085758164 and opened publicly. PHP email sending failed; authenticated SMTP support is installed pending a private sending credential and inbox verification. The main subscription release and payments are not activated.
+
+Chrome confirmed synthetic registration/email confirmation/sign-in; explicit ledger linking; trial editing; 600 XAF MTN payment submission; pending status without access extension; session-bound admin email-code verification; approval and restored paid access; expired editing blocked with all records visible; PDF and JSON downloads containing the three test records; a staged service-worker update without record loss; and cached reopening plus saving a fourth entry after both local servers were stopped. Account-switch and confirmation-link handling issues found during review were fixed. Real MTN payments and physical devices were not used.
+
+Run `npm test`, `npm run build`, `npm run check`; PHP backend checks: `php tests/hostinger-backend.php` with OpenSSL and PDO SQLite enabled. `tests/hostinger-review.mjs` starts an isolated local fixture; `tests/hostinger-http.mjs` checks its HTTP controls. The fixture uses synthetic accounts and a private file outbox; never deploy test-results or fixture keys.
+
 # Version 1.14.0 — PDF history and visible tags
 
 Build and syntax checks passed. All 51 unit tests passed, including new PDF structure, font embedding, pagination beyond 100 results, cancellation after a ledger change, and offline caching of the PDF module. The existing PIN, recovery, device and calculation tests remain green.

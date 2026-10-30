@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "apiUrl": "https://ikomeflow.com/flowtrack-api/index.php",
+  "offlinePublicKey": {
+    "kty": "RSA",
+    "n": "scPXqpOkA01Th0mEEcAJVUpZAgHudWQw1GLwsf_EMqr0a2UZSqSbIgskZOx7yvUpm8AFHk2-dA-d3AuitmHRi2jivO1OjbRKfWzBmV1_tdfRuhziRubjgMNbO7mUVqefU3yvK9Ccq1xQNEYFkJFNaG0NYaMGFcVQZpa6DVxSYA2K_u5DlGrUt5-bssEvVl3JKRadOL7F_fMRbCfl6EGRLC-aHUSRl0FvPMADaecOk8vVpnoWk-06Uy_8pN3CvUUheBH3u97-_T0lBSpr-AqSw5LZ7DHcT75Rt_KAUmTaiWF5zvGlm-VFWZimP-BaxYzeG6THLgz5hBZ4msuaAJuwuQ",
+    "e": "AQAB"
+  }
+}

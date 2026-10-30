@@ -1,3 +1,11 @@
+# FlowTrack 1.15 — Hostinger subscription release (staged)
+
+The account/subscription implementation is staged. The Hostinger API/database and separate account-only page are installed; the main app remains at 1.14 with subscriptions and payments disabled. Owner registration was saved, but email confirmation failed because PHP mail was rejected. Authenticated SMTP is installed and awaits a private sender credential plus real inbox verification. It uses PHP/MySQL on the existing Hostinger Cloud plan. Supabase is not used. See [Hostinger setup and verification](backend/hostinger/README.md) for the private configuration, deployment steps, test limits and activation requirements. Subscriptions remain disabled in the committed public settings until staging checks pass.
+
+The existing encrypted local ledger, original app address, PIN/device unlock and PDF/JSON exports are preserved. Registration starts a server-timed 30-day trial. Manual MTN Mobile Money renewal is 600 XAF/month; only verified admin approval grants a calendar month. Expired accounts can view and export.
+
+The sections below document the prior offline ledger releases; historical free/no-account statements describe those releases.
+
 # FlowTrack
 
 ## PDF history and visible tags (1.14)

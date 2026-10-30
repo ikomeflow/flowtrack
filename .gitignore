@@ -3,3 +3,10 @@ node_modules/
 *.log
 .openai/local/
 test-results/
+backend/hostinger/private/config.php
+backend/hostinger/private/mail-config.php
+backend/hostinger/private/mail-status.json
+backend/hostinger/private/*password*.txt
+backend/hostinger/private/*.pem
+backend/hostinger/private/public-config.json
+*.sqlite
