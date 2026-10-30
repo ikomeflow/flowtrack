@@ -1,4 +1,5 @@
 import {initInstall} from './install.mjs';
+import {initAnalytics} from './analytics.mjs';
 initInstall({name:'FlowTrack',onlineURL:'https://flowtrack.ikomeflow.com/'});
 // Optional device verification loads after the PIN gate can paint.
 let deviceApi,devicePromise;
@@ -96,8 +97,11 @@ $$('.prev-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(
 function clearPrivateViews(){for(const id of ['net-value','income-value','expense-value','recent-list','transaction-list','calendar-grid','day-list','day-summary','day-title','result-count'])$('#'+id).replaceChildren();historyLimit=100;historyFilterKey='';}
 function activeView(){const name=location.hash.slice(1);return Object.hasOwn(views,name)?name:'overview';}
 const views={overview:'Home',transactions:'History',calendar:'History',settings:'Settings'};
+// Analytics failure must never block the offline ledger or PIN gate.
+let analytics={track:()=>false};
+try{analytics=initAnalytics({view:()=>vault.locked?'locked':needsSetup()?'setup':activeView()});}catch{}
 function route(focus=true){const view=Object.hasOwn(views,location.hash.slice(1))?location.hash.slice(1):'overview';$('#heading-month').hidden=view!=='overview';$('#app-shell').dataset.view=view;$$('.view').forEach(v=>v.hidden=v.id!==view+'-view');$$('nav a').forEach(a=>{a.classList.toggle('active',a.dataset.view===(view==='calendar'?'transactions':view));if(a.dataset.view===(view==='calendar'?'transactions':view))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#page-title').textContent=views[view];$('#breadcrumb').textContent=views[view];$('#add-button').hidden=view==='settings';if(vault.locked||needsSetup())clearPrivateViews();else if(view==='overview')overview();else if(view==='transactions')history();else if(view==='calendar')calendar();if(focus)$('#main').focus({preventScroll:true});}
-window.addEventListener('hashchange',()=>route());
+window.addEventListener('hashchange',()=>{route();analytics.track('page_view');});
 
 function openTransaction(id=null,date=null){
  if(vault.locked||$('#app-shell').hidden)return;if(corrupt&&!demo){notify('Recover your saved data from Settings first.');return;}
@@ -107,7 +111,7 @@ $('#add-button').addEventListener('click',()=>openTransaction());$('#mobile-add'
 $('#date').addEventListener('invalid',()=>$('#transaction-options').open=true);
 $('#transaction-form').addEventListener('submit',async e=>{
  e.preventDefault();try{const t=validateTransaction({id:editingId||crypto.randomUUID(),description:$('#description').value.trim()||defaultDescription($('input[name=type]:checked').value),amount:parseAmount($('#amount').value),date:$('#date').value,type:$('input[name=type]:checked').value,tags:$('#tags').value.split(',').map(s=>s.trim()).filter(Boolean)});
- const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){setMonth(t.date.slice(0,7));selectedDate=t.date;if(activeView()==='calendar')calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Back up before closing.':'Saved.');}else $('#form-error').textContent=toastMessage;}
+ const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){if(!demo)analytics.track(editingId?'transaction_updated':'transaction_created');setMonth(t.date.slice(0,7));selectedDate=t.date;if(activeView()==='calendar')calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Back up before closing.':'Saved.');}else $('#form-error').textContent=toastMessage;}
  catch(err){$('#form-error').textContent=err.message;}
 });
 document.addEventListener('click',async e=>{
@@ -120,6 +124,7 @@ document.addEventListener('click',async e=>{
 $('#delete-transaction').addEventListener('click',async()=>{
  if(saving||vault.locked)return;const t=state().transactions.find(x=>x.id===editingId);if(!t)return;
  if(await commit({...state(),transactions:state().transactions.filter(x=>x.id!==t.id)})){
+  if(!demo)analytics.track('transaction_deleted');
   $('#transaction-dialog').close();if(vault.locked||$('#app-shell').hidden)return;
   const previous=pendingDeletion&&pendingDeletion.expires>Date.now()&&pendingDeletion.demo===!!demo?pendingDeletion.items:[];
   pendingDeletion={items:[...previous,t],demo:!!demo,expires:Date.now()+30000};notify(pendingDeletion.items.length===1?'Transaction deleted.':`${pendingDeletion.items.length} transactions deleted.`);
@@ -146,12 +151,12 @@ async function exportPDF(all=false){
  try{
   const {createHistoryPDF}=await import('./history-pdf-v1.mjs');if(!current())return;
   const pdf=await createHistoryPDF(rows,snapshot.currency,{...filters,sample,isCurrent:current});if(!current())return;
-  download(pdf,`flowtrack${sample?'-sample':''}-history-${today()}.pdf`,'application/pdf');notify('PDF downloaded. Keep it private.');
+  download(pdf,`flowtrack${sample?'-sample':''}-history-${today()}.pdf`,'application/pdf');if(!sample)analytics.track('pdf_exported');notify('PDF downloaded. Keep it private.');
  }catch(error){if(current())notify(error.name==='AbortError'?'PDF cancelled.':'Could not create the PDF. Please try again.');}
  finally{exporting=false;$('#export-all').disabled=false;$('#export-filtered').disabled=!filtered().length;for(const id of ['export-all','export-filtered'])$('#'+id).removeAttribute('aria-busy');}
 }
 $('#export-all').addEventListener('click',()=>exportPDF(true));$('#export-filtered').addEventListener('click',()=>exportPDF());
-$('#backup-button').addEventListener('click',()=>{if(corrupt&&!demo){notify('Download the unreadable original using the recovery link first.');return;}download(JSON.stringify(state(),null,2),`flowtrack${demo?'-demo':''}-backup-${today()}.json`,'application/json');notify('Backup downloaded. Keep it somewhere safe and private.');});
+$('#backup-button').addEventListener('click',()=>{if(corrupt&&!demo){notify('Download the unreadable original using the recovery link first.');return;}download(JSON.stringify(state(),null,2),`flowtrack${demo?'-demo':''}-backup-${today()}.json`,'application/json');if(!demo)analytics.track('backup_exported');notify('Backup downloaded. Keep it somewhere safe and private.');});
 $('#recovery-button').addEventListener('click',()=>download(recoveryRaw,`flowtrack-recovery-${today()}.txt`,'text/plain'));
 $('#restore-button').addEventListener('click',()=>$('#restore-file').click());
 $('#restore-file').addEventListener('change',async e=>{
@@ -160,12 +165,12 @@ $('#restore-file').addEventListener('change',async e=>{
  const parsed=JSON.parse(await f.text());
  if(isVault(parsed)){
    const incoming=validateVault(parsed);if(demo)throw Error('Leave demo mode before restoring a locked copy.');
-   if(await confirmAction('Restore locked copy?','This replaces this browser’s ledger. You will need the PIN that protected this copy. Back up current records first.','Restore locked copy')){vault.replaceLocked(incoming);clearUndo();lockApp(false);}return;
+   if(await confirmAction('Restore locked copy?','This replaces this browser’s ledger. You will need the PIN that protected this copy. Back up current records first.','Restore locked copy')){vault.replaceLocked(incoming);analytics.track('backup_restored');clearUndo();lockApp(false);}return;
  }
  const incoming=validateState(parsed);
  if(await confirmAction('Replace this ledger?',`Restore ${incoming.transactions.length} transactions in ${incoming.currency}? This replaces ${demo?'the demo ledger':'all current records in this browser'}. Back up first.`,'Restore backup')){
    if(demo){clearUndo();demo=incoming;render();notify('Backup loaded into demo mode only.');return;}
-   saving=true;try{await vault.save(incoming);clearUndo();data=incoming;corrupt=false;storageUnavailable=false;recoveryRaw='';render();showApp();notify('Backup restored.');}finally{finishSaving();}
+   saving=true;try{await vault.save(incoming);clearUndo();data=incoming;corrupt=false;storageUnavailable=false;recoveryRaw='';render();showApp();analytics.track('backup_restored');notify('Backup restored.');}finally{finishSaving();}
  }
  }catch(err){notify('Restore failed: '+err.message);}
 });
