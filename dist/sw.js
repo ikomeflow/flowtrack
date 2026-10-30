@@ -1,9 +1,9 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v22-20261029-pdf-tags';
+const CACHE=PREFIX+'v23-20261030-subscriptions';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
-const SHELL=['index.html','styles-v12.css','app-v15.mjs','device-v1.mjs','history-pdf-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
+const SHELL=['index.html','styles-v13.css','app-v16.mjs','device-v1.mjs','account-v1.mjs','history-pdf-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
 // Save the visible screen before installation icons and optional tools.
 const CORE=SHELL.filter(url=>/\/(?:index\.html|app-v\d+\.mjs|styles-v\d+\.css|icon\.svg)$/.test(url));
 const EXTRAS=SHELL.filter(url=>!CORE.includes(url));
