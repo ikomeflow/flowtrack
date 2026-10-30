@@ -1,3 +1,4 @@
+import {subscriptionAccess,refreshSubscriptionControls,initSubscriptions} from './subscription.mjs';
 import {initInstall} from './install.mjs';
 initInstall({name:'FlowTrack',onlineURL:'https://flowtrack.ikomeflow.com/'});
 // Optional device verification loads after the PIN gate can paint.
@@ -45,7 +46,9 @@ function updateStorageNotice(){
  alert.textContent=corrupt?'Your saved ledger could not be read. It has been preserved. New entries are blocked to protect it. In Settings, download the original data, then restore a valid backup or clear it deliberately.':storageUnavailable?'Browser storage is unavailable. Changes will only last for this open session. Download a JSON backup before closing this page.':'';
  $('#recovery-button').hidden=!corrupt;$('#add-button').disabled=corrupt&&!demo;$('#mobile-add').disabled=corrupt&&!demo;
 }
+function canEdit(){const access=subscriptionAccess();if(demo||access.allowed)return true;notify(access.reason);return false;}
 async function commit(next){
+ if(!canEdit())return false;
  if(saving||vault.locked){notify('Wait for saving to finish, or unlock FlowTrack.');return false;}
  saving=true;
  try{next=validateState(next);if(demo){demo=next;render();return true;}if(corrupt)throw Error('Saved data is unreadable. Recover it from Settings before making changes.');
@@ -88,7 +91,7 @@ function calendar(){
 function render(){
  for(const id of ['overview-month','history-month','calendar-month'])$('#'+id).value=month;
  for(const prefix of ['overview','calendar'])$('#'+prefix+'-month-label').textContent=monthLabel(month,{month:'short',year:'numeric'});
- $('#currency').value=state().currency;securityStatus();$('#demo-banner').hidden=!demo;$('#demo-button').hidden=!!demo;updateStorageNotice();route(false);
+ $('#currency').value=state().currency;securityStatus();$('#demo-banner').hidden=!demo;$('#demo-button').hidden=!!demo;updateStorageNotice();route(false);refreshSubscriptionControls({demo:!!demo});
 }
 function setMonth(value){if(!/^\d{4}-\d{2}$/.test(value)||value<'1900-01'||value>'9999-12')return;month=value;if(!selectedDate.startsWith(month))selectedDate=month===today().slice(0,7)?today():month+'-01';render();}
 for(const id of ['overview-month','history-month','calendar-month'])$('#'+id).addEventListener('change',e=>setMonth(e.target.value));
@@ -100,6 +103,7 @@ function route(focus=true){const view=Object.hasOwn(views,location.hash.slice(1)
 window.addEventListener('hashchange',()=>route());
 
 function openTransaction(id=null,date=null){
+ if(!canEdit())return;
  if(vault.locked||$('#app-shell').hidden)return;if(corrupt&&!demo){notify('Recover your saved data from Settings first.');return;}
  const t=id?state().transactions.find(x=>x.id===id):null;editingId=t?.id||null;$('#transaction-form').reset();$('#transaction-title').textContent=t?'Edit transaction':'Add transaction';$('#save-button').textContent=t?'Save changes':'Save';$('#delete-transaction').hidden=!t;$('#transaction-options').open=!!t&&t.date!==today();$('#description').value=t&&t.description!==defaultDescription(t.type)?t.description:'';$('#amount').value=t?(t.amount/100).toFixed(2):'';$('#date').value=t?.date||date||today();$('#tags').value=t?.tags.join(', ')||'';$('#amount-currency').textContent=state().currency;$('#form-error').textContent='';$(`input[name=type][value=${t?.type||'expense'}]`).checked=true;$('#transaction-dialog').showModal();$('#amount').focus();
 }
@@ -153,19 +157,19 @@ async function exportPDF(all=false){
 $('#export-all').addEventListener('click',()=>exportPDF(true));$('#export-filtered').addEventListener('click',()=>exportPDF());
 $('#backup-button').addEventListener('click',()=>{if(corrupt&&!demo){notify('Download the unreadable original using the recovery link first.');return;}download(JSON.stringify(state(),null,2),`flowtrack${demo?'-demo':''}-backup-${today()}.json`,'application/json');notify('Backup downloaded. Keep it somewhere safe and private.');});
 $('#recovery-button').addEventListener('click',()=>download(recoveryRaw,`flowtrack-recovery-${today()}.txt`,'text/plain'));
-$('#restore-button').addEventListener('click',()=>$('#restore-file').click());
+$('#restore-button').addEventListener('click',()=>{if(canEdit())$('#restore-file').click();});
 $('#restore-file').addEventListener('change',async e=>{
- const f=e.target.files[0];e.target.value='';if(!f)return;
+ const f=e.target.files[0];e.target.value='';if(!f||!canEdit())return;
  try{if(f.size>32*1024*1024)throw Error('Backup is too large (32 MB maximum).');if(saving)throw Error('Wait for the current save to finish.');
  const parsed=JSON.parse(await f.text());
  if(isVault(parsed)){
    const incoming=validateVault(parsed);if(demo)throw Error('Leave demo mode before restoring a locked copy.');
-   if(await confirmAction('Restore locked copy?','This replaces this browser’s ledger. You will need the PIN that protected this copy. Back up current records first.','Restore locked copy')){vault.replaceLocked(incoming);clearUndo();lockApp(false);}return;
+   if(await confirmAction('Restore locked copy?','This replaces this browser’s ledger. You will need the PIN that protected this copy. Back up current records first.','Restore locked copy')){if(!canEdit())return;vault.replaceLocked(incoming);clearUndo();lockApp(false);}return;
  }
  const incoming=validateState(parsed);
  if(await confirmAction('Replace this ledger?',`Restore ${incoming.transactions.length} transactions in ${incoming.currency}? This replaces ${demo?'the demo ledger':'all current records in this browser'}. Back up first.`,'Restore backup')){
    if(demo){clearUndo();demo=incoming;render();notify('Backup loaded into demo mode only.');return;}
-   saving=true;try{await vault.save(incoming);clearUndo();data=incoming;corrupt=false;storageUnavailable=false;recoveryRaw='';render();showApp();notify('Backup restored.');}finally{finishSaving();}
+   if(!canEdit())return;saving=true;try{await vault.save(incoming);clearUndo();data=incoming;corrupt=false;storageUnavailable=false;recoveryRaw='';render();showApp();notify('Backup restored.');}finally{finishSaving();}
  }
  }catch(err){notify('Restore failed: '+err.message);}
 });
@@ -370,3 +374,5 @@ if('serviceWorker' in navigator&&window.isSecureContext){
  navigator.serviceWorker.register('./sw.js').then(reg=>{offlineRegistration=reg;watchOffline(reg);}).catch(()=>offlineStatus('Offline download interrupted.',true));
  let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!refreshing&&!$('#update-banner').hidden){refreshing=true;if(location.pathname.endsWith('/open.html'))location.replace(new URL('./',location.href));else location.reload();}});
 }else offlineStatus('Offline files need HTTPS or localhost.');
+
+initSubscriptions({confirm:confirmAction,refresh(){updateStorageNotice();for(const id of ['add-day','restore-button','currency'])document.getElementById(id).disabled=false;refreshSubscriptionControls({demo:!!demo});},canLink:()=>!vault.locked&&!needsSetup()&&!demo&&!corrupt,lock:()=>lockApp(),notify});

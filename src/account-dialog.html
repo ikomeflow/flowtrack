@@ -1,0 +1,30 @@
+<dialog id="account-dialog" class="account-dialog" aria-labelledby="account-title">
+ <div class="dialog-heading"><h2 id="account-title">Account &amp; subscription</h2><button id="account-close" class="icon-button" aria-label="Close account">×</button></div>
+ <p class="account-price">30 days free, then <strong>$1/month</strong></p>
+ <p>Renew manually with Mobile Money. No automatic debit. Signing in does not upload or synchronize financial records.</p>
+ <p id="account-offline" class="account-notice"></p>
+ <p id="account-message" class="form-error" role="status" aria-live="polite"></p>
+ <form id="account-auth">
+  <label for="account-email">Email</label><input id="account-email" type="email" autocomplete="username" maxlength="254" required>
+  <label for="account-password">Password</label><input id="account-password" type="password" autocomplete="current-password" maxlength="72" required>
+  <p class="hint">New accounts: use 12–72 characters. Confirm your email before signing in. Your trial starts when you register.</p>
+  <div class="account-actions"><button class="button primary" type="submit" value="signin">Sign in</button><button class="button secondary" type="submit" value="signup">Create account</button><button id="account-forgot" class="text-link" type="button">Forgot password?</button><button id="account-resend" class="text-link" type="button">Resend confirmation</button></div>
+ </form>
+ <button class="button primary" id="account-verify" hidden>Confirm my email</button>
+ <form id="account-reset-form" hidden><label for="account-new-password">New account password</label><input id="account-new-password" type="password" minlength="12" maxlength="72" autocomplete="new-password" required><button class="button primary">Save new password</button></form>
+ <div id="account-signed-in" hidden>
+  <p>Signed in as <strong id="account-email-label"></strong></p>
+  <div class="account-actions"><button class="button secondary" id="account-refresh">Refresh status</button><button class="text-link" id="account-signout">Sign out on this device</button></div>
+  <button class="button primary" id="account-link">Link this device’s ledger</button>
+  <p class="hint">Unlock or create your local PIN before linking. Each browser ledger links to one account. Account password recovery does not recover a forgotten ledger PIN.</p>
+  <section class="account-summary"><h3 id="account-status">Subscription status</h3><p id="account-days"></p><dl><dt>Trial ends</dt><dd id="account-trial">—</dd><dt>Paid access until</dt><dd id="account-renewal">—</dd></dl></section>
+
+ </div>
+ <section id="payment-section" hidden>
+  <h3>Renew with Mobile Money</h3><p>One approved payment adds one calendar month, keeping any remaining trial or paid time. A pending or rejected payment does not extend access.</p>
+  <form id="payment-form"><label for="payment-method">Payment method</label><select id="payment-method" required></select><p id="payment-instructions" class="account-notice"></p><label for="payment-reference">Transaction reference</label><input id="payment-reference" maxlength="100" pattern="[A-Za-z0-9-]{4,100}" autocomplete="off" required><label for="payment-sender">Sender’s Mobile Money number</label><input id="payment-sender" type="tel" minlength="3" maxlength="40" autocomplete="tel" required><button class="button primary" id="payment-submit">Submit for verification</button></form>
+  <h3>Payment history</h3><p class="hint">Latest 100 submissions. Approval requires a statement check by the admin.</p><ul id="payment-history" class="payment-history"></ul>
+ </section>
+ <section id="admin-section" hidden><h3>Payment verification</h3><p>Verify an email code to access reviews for 10 minutes. Check the receiving MTN account statement. Match the recipient, amount, reference and sender before approval.</p><div id="admin-code-panel"><button class="button secondary" id="admin-send-code">Email me an admin code</button><form id="admin-code-form"><label for="account-admin-code">Admin code · 6 digits</label><input id="account-admin-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required><button class="button secondary">Verify admin code</button></form></div><button id="admin-refresh" class="button secondary">Load pending payments</button><div id="admin-queue"></div></section>
+ <p class="hint account-footer">Records remain available with your PIN when the trial or subscription ends. View History and download PDF or JSON in Settings. Connect at least every 7 days for an offline-access refresh; an expired offline check pauses editing until you reconnect.</p>
+</dialog>
