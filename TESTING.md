@@ -1,3 +1,9 @@
+# Version 1.16.0 — Chrome installation
+
+Build and syntax checks passed, and all 78 unit tests passed. Fourteen installation tests cover the one-tap native prompt, separate help action, prompt arrival after opening help, rapid-tap protection, cancellation, errors, installed/uninstalled transitions, portable/embedded entries, iPhone instructions, clipboard fallback and canonical-link privacy. The installation harness refuses browser-storage access. Existing ledger, PIN, recovery, analytics and offline-cache tests remain green.
+
+The live app's HTTPS manifest, PNG dimensions, icon responses, app bundle and service worker were checked before changing the flow. Chrome offered its native install control. The rebuilt app was checked in Chrome on a separate local origin without creating a PIN or unlocking real records: Ready offline, visible install/help controls, and the install dialog at a 390px viewport (358px dialog, no horizontal overflow). The actual Android launcher installation and physical Safari were not tested; Android instruction branches were exercised in the DOM harness. Chrome controls native installation availability.
+
 # Version 1.14.0 — PDF history and visible tags
 
 Build and syntax checks passed. All 51 unit tests passed, including new PDF structure, font embedding, pagination beyond 100 results, cancellation after a ledger change, and offline caching of the PDF module. The existing PIN, recovery, device and calculation tests remain green.
