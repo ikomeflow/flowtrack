@@ -7,7 +7,7 @@ function setup(path='/',failInstall=false,failAnalytics=false){
  const events={},stores=new Map(),deleted=[],calls=[],stages=[];let skipped=0,claimed=0;
  const caches={open:async name=>{if(!stores.has(name))stores.set(name,new Map());const map=stores.get(name);return {match:async url=>map.get(url),add:async url=>{if(failAnalytics)throw Error('analytics blocked');map.set(url,new Response('saved:'+url));},addAll:async urls=>{stages.push([...urls]);if(failInstall)throw Error('network failure');for(const url of urls)map.set(url,new Response('saved:'+url));}};},keys:async()=>[...stores.keys()],delete:async name=>{deleted.push(name);return stores.delete(name);}};
  vm.runInNewContext(source,{URL,Promise,self:{location:{href:'https://example.test'+path+'sw.js'},addEventListener:(name,fn)=>events[name]=fn,skipWaiting:()=>{skipped++;},clients:{claim:async()=>{claimed++;}}},caches,fetch:request=>{calls.push(request.url);return new Promise(()=>{});}});
- const active='flowtrack:'+path+':v26-20261030-insights',index='https://example.test'+path+'index.html';
+ const active='flowtrack:'+path+':v27-20261030-brief-consent',index='https://example.test'+path+'index.html';
  function fetch(url,mode='navigate',method='GET'){let result;events.fetch({request:{url,mode,method},respondWith:p=>result=p});return result;}
  async function run(name){let task;events[name]({waitUntil:p=>task=p});await task;}
  return {events,stores,deleted,calls,stages,active,index,fetch,run,skipped:()=>skipped,claimed:()=>claimed};
