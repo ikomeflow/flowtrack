@@ -21,4 +21,16 @@ check(FlowTrack_Analytics::collect(new Request(json_encode($valid),$headers+['se
 check(FlowTrack_Analytics::collect(new Request(json_encode($valid),$headers+['dnt'=>'1']))->status===204,'DNT discards before storage');
 check(strlen(FlowTrack_Analytics::hash('visitor:test'))===64,'salted identifiers');
 check(FlowTrack_Analytics::hash('visitor:test')!==FlowTrack_Analytics::hash('session:test'),'identifier domains separated');
+$v2=array_merge($valid,['v'=>2,'device'=>'mobile','mode'=>'installed','version'=>'1.15.0','error'=>'none']);
+check(FlowTrack_Analytics::valid($v2),'accept bounded version 2 context');
+foreach (['device'=>'private device name','mode'=>'private mode','version'=>'private user agent','error'=>'raw exception','notes'=>'private notes'] as $key=>$value){$bad=$v2;$bad[$key]=$value;check(!FlowTrack_Analytics::valid($bad),'reject v2 private '.$key);}
+$failure=$v2;$failure['event']='app_error';$failure['error']='save_failed';check(FlowTrack_Analytics::valid($failure),'accept safe failure category');
+$failure['error']='none';check(!FlowTrack_Analytics::valid($failure),'reject error without safe code');
+$legacyError=$valid;$legacyError['event']='app_error';check(!FlowTrack_Analytics::valid($legacyError),'legacy consent cannot send new events');
+check(FlowTrack_Analytics::collect(new Request(json_encode($v2),$headers+['sec-gpc'=>'1']))->status===204,'v2 GPC discards before storage');
+function current_user_can($cap){return false;}
+function wp_send_json_error($body,$status){throw new RuntimeException('Denied',$status);}
+function wp_die($body,$title,$args){throw new RuntimeException('Denied',$args['response']);}
+try{FlowTrack_Analytics::ajax();throw new Exception('Report should be denied');}catch(RuntimeException $e){check($e->getCode()===403,'non-administrator cannot read report');}
+try{FlowTrack_Analytics::page();throw new Exception('Page should be denied');}catch(RuntimeException $e){check($e->getCode()===403,'non-administrator cannot read dashboard');}
 echo "Collector contract checks passed.\n";

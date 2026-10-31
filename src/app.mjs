@@ -1,5 +1,4 @@
 import {initInstall} from './install.mjs';
-import {initAnalytics} from './analytics.mjs';
 initInstall({name:'FlowTrack',onlineURL:'https://flowtrack.ikomeflow.com/'});
 // Optional device verification loads after the PIN gate can paint.
 let deviceApi,devicePromise;
@@ -52,7 +51,7 @@ async function commit(next){
  try{next=validateState(next);if(demo){demo=next;render();return true;}if(corrupt)throw Error('Saved data is unreadable. Recover it from Settings before making changes.');
    if(!storageUnavailable||vault.enabled){try{await vault.save(next);}catch(e){throw Error('Could not save. Your change was not applied. '+e.message);}}
    data=next;render();return true;
- }catch(e){notify(e.message);return false;}
+ }catch(e){if(!demo)analytics.error('save_failed');notify(e.message);return false;}
  finally{finishSaving();}
 }
 function confirmAction(title,message,label='Continue',danger=false){
@@ -98,8 +97,7 @@ function clearPrivateViews(){for(const id of ['net-value','income-value','expens
 function activeView(){const name=location.hash.slice(1);return Object.hasOwn(views,name)?name:'overview';}
 const views={overview:'Home',transactions:'History',calendar:'History',settings:'Settings'};
 // Analytics failure must never block the offline ledger or PIN gate.
-let analytics={track:()=>false};
-try{analytics=initAnalytics({view:()=>vault.locked?'locked':needsSetup()?'setup':activeView()});}catch{}
+const analytics={track(event){try{window.dispatchEvent(new CustomEvent('flowtrack-usage',{detail:{event}}));}catch{}},error(code){try{window.dispatchEvent(new CustomEvent('flowtrack-usage',{detail:{event:'app_error',code}}));}catch{}}};
 function route(focus=true){const view=Object.hasOwn(views,location.hash.slice(1))?location.hash.slice(1):'overview';$('#heading-month').hidden=view!=='overview';$('#app-shell').dataset.view=view;$$('.view').forEach(v=>v.hidden=v.id!==view+'-view');$$('nav a').forEach(a=>{a.classList.toggle('active',a.dataset.view===(view==='calendar'?'transactions':view));if(a.dataset.view===(view==='calendar'?'transactions':view))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#page-title').textContent=views[view];$('#breadcrumb').textContent=views[view];$('#add-button').hidden=view==='settings';if(vault.locked||needsSetup())clearPrivateViews();else if(view==='overview')overview();else if(view==='transactions')history();else if(view==='calendar')calendar();if(focus)$('#main').focus({preventScroll:true});}
 window.addEventListener('hashchange',()=>{route();analytics.track('page_view');});
 
@@ -111,7 +109,7 @@ $('#add-button').addEventListener('click',()=>openTransaction());$('#mobile-add'
 $('#date').addEventListener('invalid',()=>$('#transaction-options').open=true);
 $('#transaction-form').addEventListener('submit',async e=>{
  e.preventDefault();try{const t=validateTransaction({id:editingId||crypto.randomUUID(),description:$('#description').value.trim()||defaultDescription($('input[name=type]:checked').value),amount:parseAmount($('#amount').value),date:$('#date').value,type:$('input[name=type]:checked').value,tags:$('#tags').value.split(',').map(s=>s.trim()).filter(Boolean)});
- const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){if(!demo)analytics.track(editingId?'transaction_updated':'transaction_created');setMonth(t.date.slice(0,7));selectedDate=t.date;if(activeView()==='calendar')calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Back up before closing.':'Saved.');}else $('#form-error').textContent=toastMessage;}
+ const firstSave=!editingId&&state().transactions.length===0;const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){if(!demo){analytics.track(editingId?'transaction_updated':'transaction_created');if(firstSave)analytics.track('first_transaction');}setMonth(t.date.slice(0,7));selectedDate=t.date;if(activeView()==='calendar')calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Back up before closing.':'Saved.');}else $('#form-error').textContent=toastMessage;}
  catch(err){$('#form-error').textContent=err.message;}
 });
 document.addEventListener('click',async e=>{
@@ -152,7 +150,7 @@ async function exportPDF(all=false){
   const {createHistoryPDF}=await import('./history-pdf-v1.mjs');if(!current())return;
   const pdf=await createHistoryPDF(rows,snapshot.currency,{...filters,sample,isCurrent:current});if(!current())return;
   download(pdf,`flowtrack${sample?'-sample':''}-history-${today()}.pdf`,'application/pdf');if(!sample)analytics.track('pdf_exported');notify('PDF downloaded. Keep it private.');
- }catch(error){if(current())notify(error.name==='AbortError'?'PDF cancelled.':'Could not create the PDF. Please try again.');}
+ }catch(error){if(current()){if(!sample&&error.name!=='AbortError')analytics.error('pdf_export_failed');notify(error.name==='AbortError'?'PDF cancelled.':'Could not create the PDF. Please try again.');}}
  finally{exporting=false;$('#export-all').disabled=false;$('#export-filtered').disabled=!filtered().length;for(const id of ['export-all','export-filtered'])$('#'+id).removeAttribute('aria-busy');}
 }
 $('#export-all').addEventListener('click',()=>exportPDF(true));$('#export-filtered').addEventListener('click',()=>exportPDF());
@@ -172,7 +170,7 @@ $('#restore-file').addEventListener('change',async e=>{
    if(demo){clearUndo();demo=incoming;render();notify('Backup loaded into demo mode only.');return;}
    saving=true;try{await vault.save(incoming);clearUndo();data=incoming;corrupt=false;storageUnavailable=false;recoveryRaw='';render();showApp();analytics.track('backup_restored');notify('Backup restored.');}finally{finishSaving();}
  }
- }catch(err){notify('Restore failed: '+err.message);}
+ }catch(err){if(!demo)analytics.error('restore_failed');notify('Restore failed: '+err.message);}
 });
 $('#clear-button').addEventListener('click',async()=>{if(saving){notify('Wait for saving to finish.');return;}if(await confirmAction('Clear all data?',`Permanently erase ${demo?'the demo ledger':'this browser’s ledger, currency and PIN'}? Download a JSON backup first. This cannot be undone.`,'Clear all data',true)){if(demo){clearUndo();demo=emptyState();render();notify('Demo ledger cleared.');return;}try{vault.clear();clearUndo();data=emptyState();corrupt=false;recoveryRaw='';render();showApp();notify('All local records cleared.');}catch{notify('Could not clear browser storage.');}}});
 $('#currency').innerHTML=Object.entries(CURRENCIES).map(([code,name])=>`<option value="${code}">${code} — ${name}</option>`).join('');
@@ -213,14 +211,16 @@ function securityStatus(){
 function needsSetup(){return !vault.enabled&&!corrupt;}
 let workspaceStyleWait=false;
 function showApp(){
+ const openingWorkspace=$('#app-shell').hidden;
+ $('#setup-screen').dataset.newLedger=needsSetup()&&!data.transactions.length?'true':'false';
  $('#gate-download').hidden=!needsSetup();
  $('#lock-screen').hidden=true;
- if(needsSetup()){$('#setup-screen').hidden=false;$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#setup-existing').hidden=!data.transactions.length;$('#setup-backup').hidden=!data.transactions.length;const unavailable=storageUnavailable||!globalThis.crypto?.subtle;$('#setup-pin').disabled=unavailable;$('#setup-restore').disabled=unavailable;$('#setup-error').textContent=unavailable?'This browser cannot securely save a PIN. Use HTTPS and allow browser storage. Back up existing records first.':'';return;}
+ if(needsSetup()){if(!data.transactions.length)analytics.track('setup_started');$('#setup-screen').hidden=false;$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#setup-existing').hidden=!data.transactions.length;$('#setup-backup').hidden=!data.transactions.length;const unavailable=storageUnavailable||!globalThis.crypto?.subtle;$('#setup-pin').disabled=unavailable;$('#setup-restore').disabled=unavailable;$('#setup-error').textContent=unavailable?'This browser cannot securely save a PIN. Use HTTPS and allow browser storage. Back up existing records first.':'';return;}
  if(document.documentElement.dataset.workspaceStyles!=='ready'){
   $('#setup-screen').hidden=true;$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#startup').hidden=false;$('#startup-message').textContent='Opening workspace…';$('#startup-retry').hidden=false;
   if(!workspaceStyleWait){workspaceStyleWait=true;window.addEventListener('flowtrack-styles-ready',()=>{workspaceStyleWait=false;if(!vault.locked)showApp();},{once:true});}return;
  }
- $('#startup').hidden=true;$('#setup-screen').hidden=true;$('#app-shell').hidden=false;$('#app-shell').inert=false;automaticDeviceUnlockPending=false;automaticDeviceUnlockCancelled=false;lastActivity=Date.now();
+ $('#startup').hidden=true;$('#setup-screen').hidden=true;$('#app-shell').hidden=false;$('#app-shell').inert=false;if(openingWorkspace)analytics.track('page_view');automaticDeviceUnlockPending=false;automaticDeviceUnlockCancelled=false;lastActivity=Date.now();
 }
 $('#setup-pin').addEventListener('click',()=>openPin('enable'));
 $('#setup-restore').addEventListener('click',()=>$('#restore-file').click());
@@ -256,7 +256,7 @@ $('#pin-form').addEventListener('submit',async e=>{
  if(['enable','change'].includes(pinMode)&&$('#pin-new').value!==$('#pin-confirm').value){$('#pin-error').textContent='PINs do not match.';return;}
  saving=true;$('#pin-save').disabled=true;
  try{
-  const draft=['recovery','remove-device'].includes(pinMode)?await vault.prepareRecovery($('#pin-current').value):await vault.prepareSimplePin($('#pin-new').value,data,pinMode==='change'?$('#pin-current').value:undefined);$('#pin-dialog').close();$('#pin-form').reset();if(draft.recoveryKey)offerRecovery(draft);else{data=vault.commitPrepared(draft);render();showApp();notify('PIN saved.');void offerDeviceUnlock();}
+  const draft=['recovery','remove-device'].includes(pinMode)?await vault.prepareRecovery($('#pin-current').value):await vault.prepareSimplePin($('#pin-new').value,data,pinMode==='change'?$('#pin-current').value:undefined);$('#pin-dialog').close();$('#pin-form').reset();if(draft.recoveryKey)offerRecovery(draft);else{data=vault.commitPrepared(draft);if(pinMode==='enable')analytics.track('pin_setup_completed');render();showApp();notify('PIN saved.');void offerDeviceUnlock();}
   lastActivity=Date.now();
  }catch(err){$('#pin-error').textContent=err.message;}
  finally{$('#pin-save').disabled=false;finishSaving();}
@@ -275,7 +275,7 @@ $('#download-recovery').addEventListener('click',()=>{if(pendingRecovery)downloa
 $('#copy-recovery').addEventListener('click',async()=>{if(!pendingRecovery)return;try{await navigator.clipboard.writeText(pendingRecovery.recoveryKey);$('#recovery-save-error').textContent='Copied. Keep it somewhere private.';}catch{$('#generated-recovery').select();$('#recovery-save-error').textContent='Select and copy the key, or download it.';}});
 $('#recovery-finish').addEventListener('click',()=>{
  if(saving||!pendingRecovery)return;if(!$('#recovery-saved').reportValidity())return;saving=true;
- try{data=vault.commitPrepared(pendingRecovery);clearRecoveryDraft();$('#reset-pin-form').reset();corrupt=false;storageUnavailable=false;render();showApp();notify('PIN saved. Your records are intact. Keep your recovery key safe.');void offerDeviceUnlock();}
+ try{const setupCompletion=needsSetup()&&!data.transactions.length;data=vault.commitPrepared(pendingRecovery);if(setupCompletion)analytics.track('pin_setup_completed');clearRecoveryDraft();$('#reset-pin-form').reset();corrupt=false;storageUnavailable=false;render();showApp();notify('PIN saved. Your records are intact. Keep your recovery key safe.');void offerDeviceUnlock();}
  catch(err){$('#recovery-save-error').textContent=err.message;}
  finally{finishSaving();}
 });
@@ -350,7 +350,7 @@ let offlineRegistration;const watchedRegistrations=new WeakSet();
 async function retryOffline(){
  $('#retry-offline').disabled=true;offlineStatus('Saving offline files…');
  try{offlineRegistration=await navigator.serviceWorker.register('./sw.js');watchOffline(offlineRegistration);await offlineRegistration.update();}
- catch{offlineStatus('Offline download interrupted.',true);}
+ catch{analytics.error('offline_setup_failed');offlineStatus('Offline download interrupted.',true);}
  finally{$('#retry-offline').disabled=false;}
 }
 function watchOffline(reg){
@@ -372,6 +372,6 @@ function watchOffline(reg){
 }
 $('#retry-offline').addEventListener('click',()=>void retryOffline());
 if('serviceWorker' in navigator&&window.isSecureContext){
- navigator.serviceWorker.register('./sw.js').then(reg=>{offlineRegistration=reg;watchOffline(reg);}).catch(()=>offlineStatus('Offline download interrupted.',true));
+ navigator.serviceWorker.register('./sw.js').then(reg=>{offlineRegistration=reg;watchOffline(reg);}).catch(()=>{analytics.error('offline_setup_failed');offlineStatus('Offline download interrupted.',true);});
  let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!refreshing&&!$('#update-banner').hidden){refreshing=true;if(location.pathname.endsWith('/open.html'))location.replace(new URL('./',location.href));else location.reload();}});
 }else offlineStatus('Offline files need HTTPS or localhost.');
