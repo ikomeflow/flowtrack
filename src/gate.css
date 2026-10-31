@@ -5,4 +5,4 @@
 /* Optional privacy choice remains usable if the main app fails to load. */
 .analytics-choice{position:fixed;right:16px;bottom:80px;z-index:70;max-width:340px;padding:20px;background:var(--surface,#fff);color:var(--ink,#162235);border:1px solid var(--line,#dce2ea);border-radius:12px;box-shadow:0 8px 28px #0002;font-size:13px}.analytics-choice[hidden]{display:none}.analytics-choice p{margin:9px 0 14px;line-height:1.6}.analytics-choice>div{display:flex;gap:10px}.analytics-choice .button{min-height:42px;flex:1;font-size:12px}.analytics-setting{padding:16px 0}.analytics-setting label{display:flex;gap:10px;align-items:center}.analytics-setting input{width:auto}@media(max-width:450px){.analytics-choice{left:12px;right:12px;bottom:78px;max-width:none}}
 
-.install-help-link{display:block;margin:8px auto 0;font-size:12px!important}
+.install-help-link{display:block;margin:8px auto 0;font-size:12px!important}.lock-card>button[data-install-open]{display:block;width:100%}.install-settings>button[data-install-help]{display:block}
