@@ -1,5 +1,9 @@
 # FlowTrack
 
+## Transaction history settings (1.17)
+
+Settings → Transaction history offers only **Download PDF**, containing all transactions. The former Settings backup and restore actions are removed. PDFs are readable documents and cannot restore app records. Existing backup import during first-use PIN setup, PIN recovery and locked-copy recovery remain separate. The ledger format and saved records are unchanged.
+
 ## Chrome installation (1.16)
 
 The app's **Install app** action opens the browser's native installation prompt directly when it is available. Android visitors without a prompt get a direct app link, a copy-link action, and concise guidance for using a regular Chrome tab outside Incognito or another app's browser. The help also explains the Chrome menu alternative and where to look for an already installed app. Installation does not require unlocking the ledger.
@@ -108,7 +112,7 @@ Replacing recovery or removing device unlock issues a new recovery code and remo
 
 Normal JSON backups and PDF histories are **unencrypted**, including when PIN lock is on. Keep them private. A locked copy is restorable with its matching PIN or recovery key; older copies keep their own keys. The destructive device reset is separate from key-based PIN recovery, requires confirmation and erases records; a separate normal JSON backup can then restore them. Cancellation preserves the original.
 
-There is no recovery service, account, cross-device sync or cloud backup. Clearing browser/site data, private browsing, device loss or browser cleanup can erase records. Moving between localhost, GitHub Pages, a custom domain or a different browser creates a separate ledger. Use **Settings → Back up** regularly, keep the JSON file privately, and restore it on the new address or device. CSV is for spreadsheets, not restoration. Protect downloaded exports: they contain readable financial data.
+There is no recovery service, account, cross-device sync or cloud backup. Clearing browser/site data, private browsing, device loss or browser cleanup can erase records. Moving between localhost, GitHub Pages, a custom domain or a different browser creates a separate ledger. Use **Settings → Transaction history → Download PDF** to keep a readable history. History PDFs cannot restore records or move the ledger to another browser. Existing JSON backups can be imported during first-use PIN setup. Protect downloaded exports: they contain readable financial data.
 
 Storage failures show a visible notice. If storage is unavailable, unprotected records last only for the open session and PIN setup is unavailable. Protected saves fail without replacing the ciphertext. Quota failures and concurrent changes reject the pending write. Unreadable data is preserved and blocks edits; download the original using Settings, then restore a known-good backup. Restore and clear actions require confirmation. JSON restores replace the ledger. Imports are limited to 32 MB and 50,000 entries; amounts use integer hundredths with safe-total checks.
 

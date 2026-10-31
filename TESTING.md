@@ -1,3 +1,7 @@
+# Version 1.17.0 — Transaction history settings
+
+Settings exposes only the complete history PDF action in its download section. The JSON export and restore buttons are removed from Settings; first-use import and recovery remain available separately. Existing browser checks now exercise the PDF action and retain legacy import and locked-copy recovery coverage.
+
 # Version 1.16.0 — Chrome installation
 
 Build and syntax checks passed, and all 78 unit tests passed. Fourteen installation tests cover the one-tap native prompt, separate help action, prompt arrival after opening help, rapid-tap protection, cancellation, errors, installed/uninstalled transitions, portable/embedded entries, iPhone instructions, clipboard fallback and canonical-link privacy. The installation harness refuses browser-storage access. Existing ledger, PIN, recovery, analytics and offline-cache tests remain green.
