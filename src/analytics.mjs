@@ -1,5 +1,5 @@
 // Fixed categories only: never receive a ledger, exception or user-entered text.
-export const APP_VERSION='1.15.0';
+export const APP_VERSION='1.16.0';
 export const EVENTS=new Set(['app_open','page_view','heartbeat','transaction_created','transaction_updated','transaction_deleted','backup_exported','pdf_exported','backup_restored','setup_started','pin_setup_completed','first_transaction','app_error']);
 export const ERROR_CODES=new Set(['save_failed','pdf_export_failed','restore_failed','startup_failed','offline_setup_failed']);
 const VIEWS=new Set(['overview','transactions','calendar','settings','locked','setup','startup']);
