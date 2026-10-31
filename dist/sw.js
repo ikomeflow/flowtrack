@@ -1,14 +1,15 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v25-20261030-consent-brand';
+const CACHE=PREFIX+'v26-20261030-insights';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
-const SHELL=['index.html','styles-v14.css','app-v17.mjs','device-v1.mjs','history-pdf-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
+const SHELL=['index.html','styles-v15.css','app-v18.mjs','analytics-v2.mjs','device-v1.mjs','history-pdf-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
 // Save the visible screen before installation icons and optional tools.
+const OPTIONAL=SHELL.filter(url=>/\/analytics-v\d+\.mjs$/.test(url));
 const CORE=SHELL.filter(url=>/\/(?:index\.html|app-v\d+\.mjs|styles-v\d+\.css|icon\.svg)$/.test(url));
-const EXTRAS=SHELL.filter(url=>!CORE.includes(url));
+const EXTRAS=SHELL.filter(url=>!CORE.includes(url)&&!OPTIONAL.includes(url));
 // Install one complete version before replacing the working offline app.
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(async c=>{await c.addAll(CORE);await c.addAll(EXTRAS);}).catch(async error=>{await caches.delete(CACHE);throw error;}));});
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(async c=>{await c.addAll(CORE);await c.addAll(EXTRAS);await Promise.allSettled(OPTIONAL.map(url=>c.add(url)));}).catch(async error=>{await caches.delete(CACHE);throw error;}));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting();});
 self.addEventListener('fetch',e=>{
