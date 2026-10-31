@@ -42,7 +42,7 @@ function load(){
 }
 function updateStorageNotice(){
  const alert=$('#storage-alert');alert.hidden=!corrupt&&!storageUnavailable;
- alert.textContent=corrupt?'Your saved ledger could not be read. It has been preserved. New entries are blocked to protect it. In Settings, download the original data, then restore a valid backup or clear it deliberately.':storageUnavailable?'Browser storage is unavailable. Changes will only last for this open session. Download a JSON backup before closing this page.':'';
+ alert.textContent=corrupt?'Your saved ledger could not be read. It has been preserved. New entries are blocked to protect it. Download the original data from Settings → Clear data before making further changes.':storageUnavailable?'Browser storage is unavailable. Changes will only last for this open session. Download your transaction history before closing this page.':'';
  $('#recovery-button').hidden=!corrupt;$('#add-button').disabled=corrupt&&!demo;$('#mobile-add').disabled=corrupt&&!demo;
 }
 async function commit(next){
@@ -109,7 +109,7 @@ $('#add-button').addEventListener('click',()=>openTransaction());$('#mobile-add'
 $('#date').addEventListener('invalid',()=>$('#transaction-options').open=true);
 $('#transaction-form').addEventListener('submit',async e=>{
  e.preventDefault();try{const t=validateTransaction({id:editingId||crypto.randomUUID(),description:$('#description').value.trim()||defaultDescription($('input[name=type]:checked').value),amount:parseAmount($('#amount').value),date:$('#date').value,type:$('input[name=type]:checked').value,tags:$('#tags').value.split(',').map(s=>s.trim()).filter(Boolean)});
- const firstSave=!editingId&&state().transactions.length===0;const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){if(!demo){analytics.track(editingId?'transaction_updated':'transaction_created');if(firstSave)analytics.track('first_transaction');}setMonth(t.date.slice(0,7));selectedDate=t.date;if(activeView()==='calendar')calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Back up before closing.':'Saved.');}else $('#form-error').textContent=toastMessage;}
+ const firstSave=!editingId&&state().transactions.length===0;const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){if(!demo){analytics.track(editingId?'transaction_updated':'transaction_created');if(firstSave)analytics.track('first_transaction');}setMonth(t.date.slice(0,7));selectedDate=t.date;if(activeView()==='calendar')calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Download your transaction history before closing.':'Saved.');}else $('#form-error').textContent=toastMessage;}
  catch(err){$('#form-error').textContent=err.message;}
 });
 document.addEventListener('click',async e=>{
@@ -154,9 +154,7 @@ async function exportPDF(all=false){
  finally{exporting=false;$('#export-all').disabled=false;$('#export-filtered').disabled=!filtered().length;for(const id of ['export-all','export-filtered'])$('#'+id).removeAttribute('aria-busy');}
 }
 $('#export-all').addEventListener('click',()=>exportPDF(true));$('#export-filtered').addEventListener('click',()=>exportPDF());
-$('#backup-button').addEventListener('click',()=>{if(corrupt&&!demo){notify('Download the unreadable original using the recovery link first.');return;}download(JSON.stringify(state(),null,2),`flowtrack${demo?'-demo':''}-backup-${today()}.json`,'application/json');if(!demo)analytics.track('backup_exported');notify('Backup downloaded. Keep it somewhere safe and private.');});
 $('#recovery-button').addEventListener('click',()=>download(recoveryRaw,`flowtrack-recovery-${today()}.txt`,'text/plain'));
-$('#restore-button').addEventListener('click',()=>$('#restore-file').click());
 $('#restore-file').addEventListener('change',async e=>{
  const f=e.target.files[0];e.target.value='';if(!f)return;
  try{if(f.size>32*1024*1024)throw Error('Backup is too large (32 MB maximum).');if(saving)throw Error('Wait for the current save to finish.');
@@ -172,7 +170,7 @@ $('#restore-file').addEventListener('change',async e=>{
  }
  }catch(err){if(!demo)analytics.error('restore_failed');notify('Restore failed: '+err.message);}
 });
-$('#clear-button').addEventListener('click',async()=>{if(saving){notify('Wait for saving to finish.');return;}if(await confirmAction('Clear all data?',`Permanently erase ${demo?'the demo ledger':'this browser’s ledger, currency and PIN'}? Download a JSON backup first. This cannot be undone.`,'Clear all data',true)){if(demo){clearUndo();demo=emptyState();render();notify('Demo ledger cleared.');return;}try{vault.clear();clearUndo();data=emptyState();corrupt=false;recoveryRaw='';render();showApp();notify('All local records cleared.');}catch{notify('Could not clear browser storage.');}}});
+$('#clear-button').addEventListener('click',async()=>{if(saving){notify('Wait for saving to finish.');return;}if(await confirmAction('Clear all data?',`Permanently erase ${demo?'the demo ledger':'this browser’s ledger, currency and PIN'}? Download your transaction history first. This cannot be undone.`,'Clear all data',true)){if(demo){clearUndo();demo=emptyState();render();notify('Demo ledger cleared.');return;}try{vault.clear();clearUndo();data=emptyState();corrupt=false;recoveryRaw='';render();showApp();notify('All local records cleared.');}catch{notify('Could not clear browser storage.');}}});
 $('#currency').innerHTML=Object.entries(CURRENCIES).map(([code,name])=>`<option value="${code}">${code} — ${name}</option>`).join('');
 $('#currency').addEventListener('change',async e=>{const next=e.target.value,previous=state().currency;e.target.value=previous;if(next===previous)return;if(state().transactions.length&&!await confirmAction('Change display currency?',`All existing ${previous} amounts will be relabeled as ${next}, with no exchange-rate conversion. For example, 1,000 ${previous} becomes 1,000 ${next}. Only continue if your ledger uses this currency.`,'Change currency'))return;if(await commit({...state(),currency:next}))notify(`Display currency changed to ${next}. No conversion applied.`);});
 $('#demo-button').addEventListener('click',()=>{
@@ -292,7 +290,7 @@ $('#reset-pin-form').addEventListener('submit',async e=>{
 $('#download-locked').addEventListener('click',()=>{if(vault.raw)download(vault.raw,`flowtrack-locked-${today()}.json`,'application/json');});
 $('#reset-locked').addEventListener('click',async()=>{
  if(await confirmAction('Reset this device?','This permanently erases the locked ledger and PIN. Save a locked copy first if you may remember the PIN later. You can restore a separate JSON backup after resetting.','Erase locked ledger',true)){
-  try{vault.clear();load();render();showApp();notify('Device reset. Restore your JSON backup from Settings.');}catch(err){$('#unlock-error').textContent='Could not reset: '+err.message;}
+  try{vault.clear();load();render();showApp();notify('Device reset. You can restore an existing backup during PIN setup.');}catch(err){$('#unlock-error').textContent='Could not reset: '+err.message;}
  }
 });
 
@@ -360,7 +358,7 @@ function watchOffline(reg){
   if(reg.waiting&&navigator.serviceWorker.controller){$('#update-banner').hidden=false;offlineStatus('Update ready.');$('#update-button').onclick=()=>{
    if($('#unlock-pin').value){$('#unlock-error').textContent='Finish or clear your PIN before updating.';return;}
    if(saving||deviceBusy||$('#transaction-dialog').open||$('#pin-dialog').open||$('#save-recovery-dialog').open||$('#reset-pin-dialog').open||$('#device-dialog').open||$('#install-dialog').open){notify('Save or close your form before updating.');return;}
-   if(storageUnavailable&&data.transactions.length){notify('Back up your session data before updating.');return;}reg.waiting.postMessage('SKIP_WAITING');
+   if(storageUnavailable&&data.transactions.length){notify('Download your transaction history before updating.');return;}reg.waiting.postMessage('SKIP_WAITING');
   };}
  }
  function installing(){const worker=reg.installing;if(!worker)return;offlineStatus(reg.active?'Downloading update…':'Saving offline files…');worker.addEventListener('statechange',()=>{
