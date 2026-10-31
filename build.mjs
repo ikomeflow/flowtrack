@@ -2,7 +2,7 @@ import {build,transform} from 'esbuild';
 import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-await build({absWorkingDir:fileURLToPath(new URL('.',import.meta.url)),entryPoints:['./src/app.mjs'],bundle:true,minify:true,format:'esm',target:['es2022'],tsconfigRaw:{},outfile:'dist/app-v19.mjs',external:['./device-v1.mjs','./history-pdf-v1.mjs'],legalComments:'none'});
+await build({absWorkingDir:fileURLToPath(new URL('.',import.meta.url)),entryPoints:['./src/app.mjs'],bundle:true,minify:true,format:'esm',target:['es2022'],tsconfigRaw:{},outfile:'dist/app-v20.mjs',external:['./device-v1.mjs','./history-pdf-v1.mjs'],legalComments:'none'});
 await build({entryPoints:['./src/analytics-entry.mjs'],bundle:true,minify:true,format:'esm',target:['es2022'],outfile:'dist/analytics-v2.mjs',legalComments:'none'});
 // PDF creation loads only when requested; its font and code also work offline.
 await build({entryPoints:['./src/history-pdf.mjs'],bundle:true,minify:true,format:'esm',target:['es2022'],outfile:'dist/history-pdf-v1.mjs',loader:{'.ttf':'base64'},external:['html2canvas','dompurify','canvg'],legalComments:'eof'});

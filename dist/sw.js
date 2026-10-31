@@ -1,9 +1,9 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v29-20261031-install-spacing';
+const CACHE=PREFIX+'v30-20261031-history-only';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
-const SHELL=['index.html','styles-v15.css','app-v19.mjs','analytics-v2.mjs','device-v1.mjs','history-pdf-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
+const SHELL=['index.html','styles-v15.css','app-v20.mjs','analytics-v2.mjs','device-v1.mjs','history-pdf-v1.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
 // Save the visible screen before installation icons and optional tools.
 const OPTIONAL=SHELL.filter(url=>/\/analytics-v\d+\.mjs$/.test(url));
 const CORE=SHELL.filter(url=>/\/(?:index\.html|app-v\d+\.mjs|styles-v\d+\.css|icon\.svg)$/.test(url));
