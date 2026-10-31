@@ -1,6 +1,6 @@
 {
   "name": "flowtrack",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "private": true,
   "type": "module",
   "description": "Free, offline-first income and expense tracker by Futura Group",
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check src/app.mjs && node --check dist/theme.js && node --check dist/app-v18.mjs && node --check dist/vault-v8.mjs && node --check dist/core-v2.mjs && node --check dist/core.mjs && node --check dist/sw.js && node --check dist/device-v1.mjs && node --check dist/analytics-v2.mjs",
+    "check": "node --check src/app.mjs && node --check src/install.mjs && node --check dist/theme.js && node --check dist/app-v19.mjs && node --check dist/vault-v8.mjs && node --check dist/core-v2.mjs && node --check dist/core.mjs && node --check dist/sw.js && node --check dist/device-v1.mjs && node --check dist/analytics-v2.mjs",
     "build": "node build.mjs"
   },
   "engines": {

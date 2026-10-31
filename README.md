@@ -1,5 +1,11 @@
 # FlowTrack
 
+## Chrome installation (1.16)
+
+The app's **Install app** action opens the browser's native installation prompt directly when it is available. Android visitors without a prompt get a direct app link, a copy-link action, and concise guidance for using a regular Chrome tab outside Incognito or another app's browser. The help also explains the Chrome menu alternative and where to look for an already installed app. Installation does not require unlocking the ledger.
+
+Chrome controls installation availability; the app cannot force a hidden browser menu item, install silently, or override device/browser restrictions. The canonical installation address is https://flowtrack.ikomeflow.com/. The WordPress portfolio page is a launch page, not the app's install entry. The manifest, app identity and icon addresses stay the same, preserving existing installations. Installation code does not access ledger, PIN, recovery or browser-storage data.
+
 ## PDF history and visible tags (1.14)
 
 History downloads a PDF of every matching transaction, including results beyond the first 100 displayed. It includes search/type/period, date range, income, expenses, net change, full descriptions, tags and page numbers. Settings downloads the full history as PDF. JSON remains a separate restore backup. PDFs are generated locally, without uploading records, and the PDF module and bundled Noto Sans font are saved with the offline shell. Normal text is selectable; characters outside the bundled font use local system-font images.
