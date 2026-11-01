@@ -1,5 +1,11 @@
 # FlowTrack
 
+## Browser installation (1.17.1)
+
+Install app opens a saved native browser installation prompt directly when one is available. Every browser controls its own installation and icon placement; a website cannot silently install itself or guarantee installation in all browsers. When no prompt is available, the helper gives browser-specific instructions for iPhone/iPad, Safari on Mac, Firefox on Android and Windows, desktop Chrome/Edge, Samsung Internet and other Android browsers. In-app browser visitors get the canonical copy/open link. Firefox on Mac/Linux receives a supported-browser alternative. Safari on Mac is identified separately from desktop-style iPadOS and its separate app storage is explained.
+
+These paths follow official browser documentation: [Chrome](https://support.google.com/chrome/answer/9658361), [Safari on Mac](https://support.apple.com/en-us/104996), [Firefox on Android](https://support.mozilla.org/en-US/kb/use-web-apps-firefox-android), [Firefox on Windows](https://support.mozilla.org/en-US/kb/web-apps-firefox-windows), [Edge](https://support.microsoft.com/en-us/edge/install-manage-or-uninstall-apps-in-microsoft-edge) and [Samsung Internet](https://samsunginternet.github.io/docs/homescreen). Menu names and availability vary by version and device. The browser-name checks choose help text only; a real beforeinstallprompt event always takes priority. No financial data or browser storage is read by the installation helper.
+
 ## Transaction history settings (1.17)
 
 Settings → Transaction history offers only **Download PDF**, containing all transactions. The former Settings backup and restore actions are removed. PDFs are readable documents and cannot restore app records. Existing backup import during first-use PIN setup, PIN recovery and locked-copy recovery remain separate. The ledger format and saved records are unchanged.

@@ -1,3 +1,7 @@
+# Version 1.17.1 — Browser-specific installation help
+
+Installation tests cover browser-family routing, desktop-style iPadOS, in-app browsers, native-event priority, cancellation/failure and existing standalone state. Browser-family tests simulate user agents and browser events; they do not prove operating-system installation on physical Android, iOS or macOS devices. Real browser verification is limited to the available Chrome environment.
+
 # Version 1.17.0 — Transaction history settings
 
 Settings exposes only the complete history PDF action in its download section. The JSON export and restore buttons are removed from Settings; first-use import and recovery remain available separately. Existing browser checks now exercise the PDF action and retain legacy import and locked-copy recovery coverage.
