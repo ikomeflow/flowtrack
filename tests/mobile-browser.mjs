@@ -13,7 +13,7 @@ try{
  await page.goto(origin);await openApp(page);const date=new Date().toLocaleDateString('en-CA');
  const ledger={version:1,currency:'XAF',transactions:[['Salary',32000000,'income'],['Freelance work',18000000,'income'],['Groceries',2450000,'expense'],['Transport',350000,'expense'],['Mobile data',600000,'expense'],['An entry with a longer description to check small screens',850000,'expense']].map(([description,amount,type],i)=>({id:'mobile-'+i,description,amount,type,date,tags:i===2?['Food']:[]}))};await writeLedger(page,ledger);await page.reload();await openApp(page);
  check(await page.locator('#mobile-add').isVisible()&&await page.locator('#add-button').isHidden(),'phones use one thumb-reachable Add action');
- check(await page.locator('nav a').count()===3,'Home, History and Settings remain the three destinations');
+ check(await page.locator('nav a').count()===4,'Home, Transactions, Reports and Settings are available');
  for(const width of [320,360,375,390,430]){
   await page.setViewportSize({width,height:844});await page.locator('nav a[data-view=overview]').click();check(await fit(),`Home fits ${width}px`);
   const heading=await page.locator('.page-heading').boundingBox(),period=await page.locator('#heading-month').boundingBox();check(period.y>=heading.y&&period.y+period.height<=heading.y+heading.height+1,`month selector stays on the heading row at ${width}px`);
@@ -31,5 +31,3 @@ try{
  await writeLedger(page,{...ledger,transactions:[{...ledger.transactions[0],amount:999999999999,description:'Large amount with long description on a narrow screen'}]});await page.reload();await openApp(page);for(const width of [320,390]){await page.setViewportSize({width,height:740});await page.locator('nav a[data-view=overview]').click();check(await fit(),`large balances fit ${width}px`);await page.locator('nav a[data-view=transactions]').click();check(await fit(),`large transaction amounts fit ${width}px`);}
  check(errors.length===0,'phone navigation and forms have no JavaScript runtime errors');console.log(`Mobile browser QA complete: ${count} assertions passed. Chromium phone emulation; physical Safari not tested.`);
 }finally{await browser.close();}
-
-

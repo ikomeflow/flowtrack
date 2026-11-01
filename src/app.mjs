@@ -1,3 +1,4 @@
+import {reportData} from './reports.mjs';
 import {initInstall} from './install.mjs';
 initInstall({name:'FlowTrack',onlineURL:'https://flowtrack.ikomeflow.com/'});
 // Optional device verification loads after the PIN gate can paint.
@@ -12,7 +13,7 @@ import { STORAGE_KEY,CURRENCIES,today,parseAmount,validateTransaction,validateSt
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const paths={lock:'M6 10h12v11H6zM8 10V6a4 4 0 0 1 8 0v4',grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',arrows:'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4',calendar:'M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z',shield:'M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7z M8 12l3 3 5-6',plus:'M12 5v14M5 12h14',left:'m14 6-6 6 6 6',right:'m10 6 6 6-6 6',down:'M17 7 7 17M7 7v10h10',up:'M7 17 17 7M7 7h10v10',wallet:'M3 6h16v14H3zM3 6V3h13v3M15 11h6v5h-6z',help:'M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20',pie:'M11 3v10h10A10 10 0 1 1 11 3zM15 2v7h7a9 9 0 0 0-7-7',search:'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14M15 15l6 6',download:'M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5',close:'m6 6 12 12M18 6 6 18',edit:'m15 4 5 5M4 20l4-1L21 6l-4-4L4 15z',trash:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7'};
+const paths={food:'M5 3v7m3-7v7M3 3v5a3 3 0 0 0 6 0V3M6 11v10M16 3v18m0-18c5 2 5 10 0 10',transport:'m5 6 2-3h10l2 3M3 11h18v8H3zM3 11l2-5h14l2 5M6 19v2m12-2v2M6 15h2m8 0h2',incomeArrow:'M12 20V4m-6 6 6-6 6 6',expenseArrow:'M12 4v16m-6-6 6 6 6-6',lock:'M6 10h12v11H6zM8 10V6a4 4 0 0 1 8 0v4',grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',arrows:'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4',calendar:'M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z',shield:'M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7z M8 12l3 3 5-6',plus:'M12 5v14M5 12h14',left:'m14 6-6 6 6 6',right:'m10 6 6 6-6 6',down:'M17 7 7 17M7 7v10h10',up:'M7 17 17 7M7 7h10v10',wallet:'M3 6h16v14H3zM3 6V3h13v3M15 11h6v5h-6z',help:'M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20',pie:'M11 3v10h10A10 10 0 1 1 11 3zM15 2v7h7a9 9 0 0 0-7-7',search:'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14M15 15l6 6',download:'M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5',close:'m6 6 12 12M18 6 6 18',edit:'m15 4 5 5M4 20l4-1L21 6l-4-4L4 15z',trash:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7'};
 const icon=name=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.wallet}"/></svg>`;
 function icons(){ $$('[data-icon]').forEach(el=>{el.innerHTML=icon(el.dataset.icon);}); }
 let data=emptyState(),demo=null,corrupt=false,storageUnavailable=false,recoveryRaw='',month=today().slice(0,7),selectedDate=today(),editingId=null,toastTimer,confirmResolve,toastMessage='',toastDeadline=0,pendingDeletion=null;
@@ -63,15 +64,33 @@ $('#confirm-ok').addEventListener('click',()=>finishConfirm(true));$('#confirm-c
 function dateLabel(date,opts={day:'numeric',month:'short'}){return new Date(date+'T12:00:00').toLocaleDateString(undefined,opts);}
 function monthLabel(m,opts={month:'short'}){return dateLabel(m+'-01',opts);}
 function empty(title,message,add=false){return `<div class="empty"><span class="empty-icon">${icon('arrows')}</span><h3>${escape(title)}</h3><p>${escape(message)}</p>${add?'<button class="button primary" data-add>Add transaction</button>':''}</div>`;}
+function transactionIcon(t){
+ const tags=t.tags.join(' ').toLowerCase();
+ if(t.type==='income')return 'wallet';
+ if(/food|grocer|meal|restaurant/.test(tags))return 'food';
+ if(/transport|fuel|travel|bus|taxi/.test(tags))return 'transport';
+ return 'expenseArrow';
+}
 function table(rows,emptyText='No transactions yet',add=false){
  if(!rows.length)return empty(emptyText,add?'Tap + Add to start.':'Try another date or search.');
- return `<div class="entry-list">${rows.map(t=>`<button class="entry-row" data-edit="${escape(t.id)}"><span class="sr-only">Edit </span><span class="transaction-icon ${t.type}">${icon(t.type==='income'?'down':'up')}</span><span class="entry-copy"><span class="transaction-description">${escape(t.description)}</span><span class="entry-date">${escape(dateLabel(t.date,{day:'numeric',month:'short',year:'numeric'}))}</span>${t.tags.length?`<span class="entry-tags"><span class="sr-only">Tags: </span>${t.tags.map(tag=>`<span class="entry-tag">${escape(tag)}</span>`).join('')}</span>`:''}</span><span class="entry-amount ${t.type==='income'?'positive':''}">${t.type==='income'?'+':'−'}${escape(fmt(t.amount))}</span></button>`).join('')}</div>`;
+ return `<div class="entry-list">${rows.map(t=>`<button class="entry-row" data-edit="${escape(t.id)}"><span class="sr-only">Edit </span><span class="transaction-icon ${t.type}">${icon(transactionIcon(t))}</span><span class="entry-copy"><span class="transaction-description">${escape(t.description)}</span><span class="entry-date">${escape(dateLabel(t.date,{day:'numeric',month:'short',year:'numeric'}))}</span>${t.tags.length?`<span class="entry-tags"><span class="sr-only">Tags: </span>${t.tags.map(tag=>`<span class="entry-tag">${escape(tag)}</span>`).join('')}</span>`:''}</span><span class="entry-amount ${t.type==='income'?'positive':''}">${t.type==='income'?'+':'−'}${escape(fmt(t.amount))}</span></button>`).join('')}</div>`;
 }
 function overview(){
  const rows=filterTransactions(state().transactions,{month}),sum=totals(rows);
  $('#net-value').textContent=fmt(sum.net);$('#income-value').textContent=fmt(sum.income);$('#expense-value').textContent=fmt(sum.expense);
+ const previous=totals(filterTransactions(state().transactions,{month:shiftMonth(month,-1)})).net,change=sum.net-previous;
+ const trend=$('#balance-change');trend.textContent=change===0?'Same balance as last month':(change>0?'↑ ':'↓ ')+fmt(Math.abs(change))+(change>0?' more':' less')+' than last month';
  $('#recent-list').innerHTML=table(rows.slice(0,5),'No transactions',!rows.length);
 
+}
+function reports(){
+ const report=reportData(state().transactions,month);
+ $('#report-period').textContent=monthLabel(month,{month:'long',year:'numeric'});
+ $('#report-totals').innerHTML=[['Income',report.income,'income'],['Expenses',report.expense,'expense'],['Monthly balance',report.net,'balance']].map(([label,value,kind])=>'<div class="report-total '+kind+'"><span>'+label+'</span><strong>'+escape(fmt(value))+'</strong></div>').join('');
+ const max=Math.max(1,...report.series.flatMap(s=>[s.income,s.expense]));
+ $('#report-chart').innerHTML=report.series.map(s=>'<div class="report-month"><div class="report-bars" aria-hidden="true"><i class="report-bar income-key" style="height:'+s.income/max*100+'%"></i><i class="report-bar expense-key" style="height:'+s.expense/max*100+'%"></i></div><span>'+escape(monthLabel(s.month))+'</span></div>').join('');
+ $('#report-chart-table').innerHTML='<details><summary>View chart amounts</summary><div class="table-wrap"><table><caption class="sr-only">Income and expenses by month</caption><thead><tr><th scope="col">Month</th><th scope="col">Income</th><th scope="col">Expenses</th></tr></thead><tbody>'+report.series.map(s=>'<tr><th scope="row">'+escape(monthLabel(s.month,{month:'short',year:'numeric'}))+'</th><td>'+escape(fmt(s.income))+'</td><td>'+escape(fmt(s.expense))+'</td></tr>').join('')+'</tbody></table></div></details>';
+ $('#report-spending').innerHTML=report.spending.length?report.spending.map(tag=>'<div class="report-tag"><div><span>'+escape(tag.label)+'</span><strong>'+escape(fmt(tag.amount))+'</strong></div><div class="report-track" aria-hidden="true"><i style="width:'+tag.amount/report.expense*100+'%"></i></div></div>').join(''):empty('No expenses this month','Your spending breakdown appears when you add an expense.');
 }
 function filtered(){return filterTransactions(state().transactions,{month:$('#period-filter').value==='month'?month:'',query:$('#search').value,type:$('#type-filter').value});}
 let historyLimit=100,historyFilterKey='';
@@ -93,12 +112,12 @@ function render(){
 function setMonth(value){if(!/^\d{4}-\d{2}$/.test(value)||value<'1900-01'||value>'9999-12')return;month=value;if(!selectedDate.startsWith(month))selectedDate=month===today().slice(0,7)?today():month+'-01';render();}
 for(const id of ['overview-month','history-month','calendar-month'])$('#'+id).addEventListener('change',e=>setMonth(e.target.value));
 $$('.prev-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(month,-1))));$$('.next-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(month,1))));
-function clearPrivateViews(){for(const id of ['net-value','income-value','expense-value','recent-list','transaction-list','calendar-grid','day-list','day-summary','day-title','result-count'])$('#'+id).replaceChildren();historyLimit=100;historyFilterKey='';}
+function clearPrivateViews(){for(const id of ['net-value','income-value','expense-value','recent-list','transaction-list','calendar-grid','day-list','day-summary','day-title','result-count','balance-change','report-period','report-totals','report-chart','report-chart-table','report-spending'])$('#'+id).replaceChildren();historyLimit=100;historyFilterKey='';}
 function activeView(){const name=location.hash.slice(1);return Object.hasOwn(views,name)?name:'overview';}
-const views={overview:'Home',transactions:'History',calendar:'History',settings:'Settings'};
+const views={overview:'Home',transactions:'Transactions',calendar:'Transactions',reports:'Reports',settings:'Settings'};
 // Analytics failure must never block the offline ledger or PIN gate.
 const analytics={track(event){try{window.dispatchEvent(new CustomEvent('flowtrack-usage',{detail:{event}}));}catch{}},error(code){try{window.dispatchEvent(new CustomEvent('flowtrack-usage',{detail:{event:'app_error',code}}));}catch{}}};
-function route(focus=true){const view=Object.hasOwn(views,location.hash.slice(1))?location.hash.slice(1):'overview';$('#heading-month').hidden=view!=='overview';$('#app-shell').dataset.view=view;$$('.view').forEach(v=>v.hidden=v.id!==view+'-view');$$('nav a').forEach(a=>{a.classList.toggle('active',a.dataset.view===(view==='calendar'?'transactions':view));if(a.dataset.view===(view==='calendar'?'transactions':view))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#page-title').textContent=views[view];$('#breadcrumb').textContent=views[view];$('#add-button').hidden=view==='settings';if(vault.locked||needsSetup())clearPrivateViews();else if(view==='overview')overview();else if(view==='transactions')history();else if(view==='calendar')calendar();if(focus)$('#main').focus({preventScroll:true});}
+function route(focus=true){const view=Object.hasOwn(views,location.hash.slice(1))?location.hash.slice(1):'overview';$('#heading-month').hidden=!['overview','reports'].includes(view);$('#app-shell').dataset.view=view;$$('.view').forEach(v=>v.hidden=v.id!==view+'-view');$$('nav a').forEach(a=>{a.classList.toggle('active',a.dataset.view===(view==='calendar'?'transactions':view));if(a.dataset.view===(view==='calendar'?'transactions':view))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#page-title').textContent=views[view];$('#breadcrumb').textContent=views[view];$('#add-button').hidden=view==='settings';if(vault.locked||needsSetup())clearPrivateViews();else if(view==='overview')overview();else if(view==='transactions')history();else if(view==='calendar')calendar();else if(view==='reports')reports();if(focus)$('#main').focus({preventScroll:true});}
 window.addEventListener('hashchange',()=>{route();analytics.track('page_view');});
 
 function openTransaction(id=null,date=null){
