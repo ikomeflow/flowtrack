@@ -12,7 +12,7 @@ const number=cents=>`${cents<0?'-':''}${Math.floor(Math.abs(cents)/100).toLocale
 export async function createHistoryPDF(rows,currency,{period='All time',type='All types',query='',sample=false,generatedAt=new Date(),isCurrent=()=>true}={}){
  const doc=new jsPDF({unit:'pt',format:'a4',compress:true,putOnlyUsedFonts:true});
  doc.addFileToVFS('NotoSans.ttf',font);doc.addFont('NotoSans.ttf','NotoSans','normal');doc.setFont('NotoSans');
- doc.setProperties({title:'FlowTrack transaction history',subject:sample?'Sample transaction history':'Transaction history',author:'FlowTrack',creator:'FlowTrack'});
+ doc.setProperties({title:'FlowTrack transaction history',subject:sample?'Sample transaction history':'Transaction history',author:'Futura Group',creator:'FlowTrack'});
  const glyphs=doc.getFont().metadata.cmap.unicode.codeMap;
  const left=40,right=doc.internal.pageSize.getWidth()-40,bottom=doc.internal.pageSize.getHeight()-54,width=right-left;
  let y=0;
@@ -80,7 +80,7 @@ export async function createHistoryPDF(rows,currency,{period='All time',type='Al
  if(!isCurrent())throw new DOMException('PDF cancelled','AbortError');
  const pages=doc.getNumberOfPages();
  for(let page=1;page<=pages;page++){
-  doc.setPage(page);rule(bottom+14);text(`Private / Generated on this device / ${localDate(generatedAt)}`,left,bottom+31,8,muted);text(`${page} / ${pages}`,right,bottom+31,8,muted,'right');
+  doc.setPage(page);rule(bottom+14);text(`Private / Generated on this device / ${localDate(generatedAt)}`,left,bottom+31,8,muted);text(`${page} / ${pages}`,doc.internal.pageSize.getWidth()/2,bottom+31,8,muted,'center');text('Produced by Futura Group',right,bottom+31,8,muted,'right');
  }
  return doc.output('arraybuffer');
 }

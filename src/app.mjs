@@ -1,4 +1,5 @@
 import {reportData} from './reports.mjs';
+import {initPDFSave} from './pdf-save.mjs';
 import {initInstall} from './install.mjs';
 initInstall({name:'FlowTrack',onlineURL:'https://flowtrack.ikomeflow.com/'});
 // Optional device verification loads after the PIN gate can paint.
@@ -158,6 +159,7 @@ $('#undo-delete').addEventListener('click',async()=>{
 $('#search').addEventListener('input',history);$('#type-filter').addEventListener('change',history);$('#period-filter').addEventListener('change',history);
 function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 let exporting=false;
+const pdfSave=initPDFSave({download,notify});
 async function exportPDF(all=false){
  if(exporting||vault.locked||needsSetup())return;
  const snapshot=state(),sample=!!demo,rows=all?filterTransactions(snapshot.transactions):filtered();
@@ -166,9 +168,9 @@ async function exportPDF(all=false){
  const current=()=>!vault.locked&&state()===snapshot;
  exporting=true;for(const id of ['export-all','export-filtered']){$('#'+id).disabled=true;$('#'+id).setAttribute('aria-busy','true');}notify('Preparing PDF…');
  try{
-  const {createHistoryPDF}=await import('./history-pdf-v1.mjs');if(!current())return;
+  const {createHistoryPDF}=await import('./history-pdf-v2.mjs');if(!current())return;
   const pdf=await createHistoryPDF(rows,snapshot.currency,{...filters,sample,isCurrent:current});if(!current())return;
-  download(pdf,`flowtrack${sample?'-sample':''}-history-${today()}.pdf`,'application/pdf');if(!sample)analytics.track('pdf_exported');notify('PDF downloaded. Keep it private.');
+  pdfSave.prepare(pdf,`flowtrack${sample?'-sample':''}-history-${today()}.pdf`,{isCurrent:current,onDelivered:()=>{if(!sample)analytics.track('pdf_exported');}});notify('PDF ready. Choose where to save it.');
  }catch(error){if(current()){if(!sample&&error.name!=='AbortError')analytics.error('pdf_export_failed');notify(error.name==='AbortError'?'PDF cancelled.':'Could not create the PDF. Please try again.');}}
  finally{exporting=false;$('#export-all').disabled=false;$('#export-filtered').disabled=!filtered().length;for(const id of ['export-all','export-filtered'])$('#'+id).removeAttribute('aria-busy');}
 }
@@ -199,7 +201,7 @@ $('#demo-button').addEventListener('click',()=>{
 });
 $('#exit-demo').addEventListener('click',()=>{if(saving)return;clearUndo();demo=null;render();notify('Back to your own ledger.');});
 function storageChanged(){
- cancelDeviceOperation();clearRecoveryDraft();const wasProtected=vault.enabled;load();$('#transaction-dialog').close();$('#pin-dialog').close();$('#pin-form').reset();demo=null;
+ pdfSave.clear();cancelDeviceOperation();clearRecoveryDraft();const wasProtected=vault.enabled;load();$('#transaction-dialog').close();$('#pin-dialog').close();$('#pin-form').reset();demo=null;
  if(vault.locked)lockApp(false);else{showApp();render();notify(wasProtected?'PIN or ledger changed in another tab.':'Ledger updated from another tab.');}
 }
 function finishSaving(){
@@ -245,6 +247,7 @@ $('#setup-backup').addEventListener('click',()=>download(JSON.stringify(data,nul
 function lockApp(broadcast=true){
  if(!vault.enabled)return;
  cancelDeviceOperation();if(saving){lockRequested=true;return;}
+ pdfSave.clear();
  hideToast();clearRecoveryDraft();vault.lock();data=emptyState();demo=null;editingId=null;$('#transaction-form').reset();$('#pin-form').reset();$('#reset-pin-form').reset();$('#search').value='';
  for(const dialog of $$('dialog'))if(dialog.open)dialog.close();if(confirmResolve){confirmResolve(false);confirmResolve=null;}
  $('#gate-download').hidden=false;$('#toast').hidden=true;render();$('#app-shell').hidden=true;$('#app-shell').inert=true;$('#setup-screen').hidden=true;$('#lock-screen').hidden=false;$('#device-unlock-error').textContent='';$('#unlock-pin').value='';$('#unlock-error').textContent='';

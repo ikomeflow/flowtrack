@@ -97,3 +97,5 @@ dialog{border-radius:20px;padding:28px;max-height:calc(100dvh - 32px);overflow-y
  #app-shell[data-view=reports] .month-control{gap:0}#app-shell[data-view=reports] .month-picker{min-width:100px}#app-shell[data-view=reports] .month-control .icon-button{width:36px;min-width:36px}
  .report-totals{grid-template-columns:1fr;gap:16px}.report-total{display:flex;justify-content:space-between;gap:10px;align-items:center}.report-total strong{font-size:19px;margin:0;text-align:right}.report-total.balance{grid-column:auto}
 }
+
+#pdf-save-dialog>p{font-size:12px;line-height:1.7;margin-top:12px}.pdf-save-name{overflow-wrap:anywhere;color:var(--muted)}#pdf-save-status:empty{display:none}#pdf-save-dialog .dialog-actions{flex-wrap:wrap}
