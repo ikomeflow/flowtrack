@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createHistoryPDF} from '../dist/history-pdf-v1.mjs';
+import {createHistoryPDF} from '../dist/history-pdf-v2.mjs';
 
 const entry={id:'one',date:'2026-10-29',description:'Café / São Tomé',tags:['Business','Office supplies'],type:'income',amount:123456};
 const pdfText=bytes=>Buffer.from(bytes).toString('latin1');
