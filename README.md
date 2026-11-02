@@ -1,5 +1,11 @@
 # FlowTrack
 
+## Mobile PDF saving (1.19)
+
+History and Settings prepare the selected PDF locally, then show a small save dialog. **Save to mobile** opens the device's file-sharing sheet when PDF file sharing is supported; choose a save destination there. **Download PDF** remains available in every browser. Cancelled or blocked sharing leaves the prepared file ready to download. Browsers without file sharing show the download option and guidance for Downloads/Files. FlowTrack cannot choose a phone folder or confirm that a share target saved a file. See the [Web Share API](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share).
+
+Every PDF page includes **Produced by Futura Group** at the bottom right, with page numbering centered. PDFs remain private, readable exports generated on the device. Locking, changed ledger data or closing the save dialog discards the staged app copy. The ledger format, PIN protection and existing offline copies are unchanged. The updated shell uses `app-v23.mjs`, `styles-v17.css`, `history-pdf-v2.mjs` and a new complete service-worker cache; older versioned assets remain available.
+
 ## Browser installation (1.17.1)
 
 Install app opens a saved native browser installation prompt directly when one is available. Every browser controls its own installation and icon placement; a website cannot silently install itself or guarantee installation in all browsers. When no prompt is available, the helper gives browser-specific instructions for iPhone/iPad, Safari on Mac, Firefox on Android and Windows, desktop Chrome/Edge, Samsung Internet and other Android browsers. In-app browser visitors get the canonical copy/open link. Firefox on Mac/Linux receives a supported-browser alternative. Safari on Mac is identified separately from desktop-style iPadOS and its separate app storage is explained.
