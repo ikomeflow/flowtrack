@@ -2,6 +2,14 @@
 
 Install this directory as a WordPress plugin on **ikomeflow.com**. Activate it and open **FlowTrack Analytics** in the admin menu. Only users with `manage_options` can read the dashboard. Its refresh endpoint requires both that permission and a WordPress nonce. The frontend is the existing static FlowTrack app, with no subscriptions or registration added.
 
+## Visitor overview (1.2.0)
+
+The admin display opens with live visitors, visitors today, sessions today and successful actions today. New/returning counts and reported errors sit on a compact line below. A seven-day visitor chart is the default; the period selector switches the chart, setup progress and expandable reports to 30 days. The headline numbers always describe today (live uses the last five minutes), and the seven-day return rate always uses its completed cohort. Missing days are shown as zero and today is marked as incomplete. Exact daily numbers remain available below the chart.
+
+Errors, activity, screen popularity and device/version tables open on demand. A failed update keeps the previous numbers with a visible stale-data message; an expired admin session asks for a page reload. Rapid period changes cannot replace a newer selection with an older response. Refreshing runs once per minute only while visible. All report text uses text nodes; no external chart library is loaded.
+
+This release changes only admin markup, styles and rendering. Collection, SQL queries, permissions, nonce checks, schema version 1.1.0, retention and stored records are unchanged. Install the plugin ZIP over the existing plugin using WordPress's replacement flow; do not uninstall it or clear its database tables. Restoring the previous plugin files rolls back the display. The static/offline FlowTrack app does not need an update for this release.
+
 ## Collection
 
 `POST https://ikomeflow.com/wp-json/flowtrack-analytics/v1/collect` accepts only the exact origin `https://flowtrack.ikomeflow.com` and a body of at most 1 KiB. Legacy version 1 accepts its original six fields and event names. Version 2 accepts exactly ten fields: version, event ID, random visitor ID, random session ID, fixed event and screen names, a broad device category, browser/installed mode, a numeric app version and a safe error code (`none` for non-error events). Unknown fields, arbitrary strings and invalid IDs are rejected. Browser requests omit cookies, credentials and referrers. No secret belongs in the browser. Collection is public and cannot cryptographically prove an event is human; Origin is browser protection, not authentication. Statistics are estimates.
