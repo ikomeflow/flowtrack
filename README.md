@@ -1,5 +1,9 @@
 # FlowTrack
 
+## Belarusian ruble (1.19.1)
+
+Settings → Currency now includes **BYN — Belarusian ruble**. The choice saves with the existing encrypted ledger, including two decimal places in transactions and reports. XAF remains the initial default; updating does not change a saved currency or convert existing amounts. Existing currency-change confirmation remains available for nonempty ledgers.
+
 ## Mobile PDF saving (1.19)
 
 History and Settings prepare the selected PDF locally, then show a small save dialog. **Save to mobile** opens the device's file-sharing sheet when PDF file sharing is supported; choose a save destination there. **Download PDF** remains available in every browser. Cancelled or blocked sharing leaves the prepared file ready to download. Browsers without file sharing show the download option and guidance for Downloads/Files. FlowTrack cannot choose a phone folder or confirm that a share target saved a file. See the [Web Share API](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share).
