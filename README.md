@@ -1,5 +1,9 @@
 # FlowTrack
 
+## Day, week, month and year (1.20)
+
+Home and Reports share a compact period selector, date/month picker and previous/next buttons. Weeks run Monday–Sunday. Totals, recent entries, comparisons, chart and spending breakdown follow the selected period. Calendar and History retain their existing filters. Period browsing never saves or changes financial records; month remains the initial view.
+
 ## Belarusian ruble (1.19.1)
 
 Settings → Currency now includes **BYN — Belarusian ruble**. The choice saves with the existing encrypted ledger, including two decimal places in transactions and reports. XAF remains the initial default; updating does not change a saved currency or convert existing amounts. Existing currency-change confirmation remains available for nonempty ledgers.
