@@ -1,6 +1,6 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v37-20261102-periods';
+const CACHE=PREFIX+'v38-20261102-period-label';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
 const SHELL=['index.html','styles-v18.css','app-v25.mjs','analytics-v2.mjs','device-v1.mjs','history-pdf-v2.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
