@@ -111,3 +111,5 @@ dialog{border-radius:20px;padding:28px;max-height:calc(100dvh - 32px);overflow-y
 #budget-form .budget-check{display:flex;align-items:center;gap:9px}#budget-native{min-height:44px}
 
 .budget-alert{position:sticky;top:70px;z-index:35;box-shadow:0 3px 12px #172b4d10}
+
+.expenditure-controls{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:center;margin:7px 0 12px}#budget-form .expenditure-controls input,#budget-period{width:100%;min-width:0;min-height:46px;font-size:16px;margin:0}#budget-period{padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}@media(max-width:360px){.expenditure-controls{grid-template-columns:96px minmax(0,1fr);gap:8px}#budget-period{font-size:14px}}
