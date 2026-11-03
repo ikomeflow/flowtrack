@@ -1,5 +1,9 @@
 # FlowTrack
 
+## Expenditure limits (1.22)
+
+Settings → Budget now has one **Expenditure limit** field with Daily, Weekly, Monthly and Yearly choices. Draft amounts stay in the form when switching periods; Save limits commits all changes together. Existing limits and alert history carry over. Weekly spending runs Monday–Sunday, resets with each new week, and uses the same once-only 50/90/100 threshold alerts. Home uses the limit matching its selected period when configured. Old budget readers reject the weekly extension rather than silently dropping it. The new complete app/style cache retains prior assets and the existing domain, ledger key, PIN and recovery formats.
+
 ## Optional budgets (1.21)
 
 Settings → Budget offers monthly limits, optional yearly/daily limits and alerts. Home shows one spending bar; a daily guide divides the remaining monthly amount by remaining days (including today). Weeks show the monthly budget; Year uses its yearly limit. Recorded expenses count, including dated entries inside the selected period. Limits reset by calendar period and weeks remain Monday–Sunday.

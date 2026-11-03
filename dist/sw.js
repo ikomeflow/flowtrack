@@ -1,9 +1,9 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v40-20261102-budgets';
+const CACHE=PREFIX+'v41-20261102-expenditure';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
-const SHELL=['index.html','styles-v19.css','app-v26.mjs','analytics-v2.mjs','device-v1.mjs','history-pdf-v2.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
+const SHELL=['index.html','styles-v20.css','app-v27.mjs','analytics-v2.mjs','device-v1.mjs','history-pdf-v2.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
 // Save the visible screen before installation icons and optional tools.
 const OPTIONAL=SHELL.filter(url=>/\/analytics-v\d+\.mjs$/.test(url));
 const CORE=SHELL.filter(url=>/\/(?:index\.html|app-v\d+\.mjs|styles-v\d+\.css|icon\.svg)$/.test(url));

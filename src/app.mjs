@@ -12,8 +12,8 @@ const deviceAvailable=()=>getDeviceApi().then(api=>api.deviceAvailable()).catch(
 const createDeviceUnlock=async options=>(await getDeviceApi()).createDeviceUnlock(options);
 const unlockWithDevice=async(descriptor,options)=>(await getDeviceApi()).unlockWithDevice(descriptor,options);
 const deviceError=error=>deviceApi?deviceApi.deviceError(error):error?.message||'Device unlock unavailable. Use your PIN.';
-import {LedgerVault,isVault,validateVault} from '../dist/vault-v9.mjs';
-import { STORAGE_KEY,CURRENCIES,today,parseAmount,validateTransaction,validateState,emptyState,totals,filterTransactions,money,shiftMonth } from '../dist/core-v3.mjs';
+import {LedgerVault,isVault,validateVault} from '../dist/vault-v10.mjs';
+import { STORAGE_KEY,CURRENCIES,today,parseAmount,validateTransaction,validateState,emptyState,totals,filterTransactions,money,shiftMonth } from '../dist/core-v4.mjs';
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -121,7 +121,7 @@ function render(){
  for(const prefix of ['overview','calendar'])$('#'+prefix+'-month-label').textContent=monthLabel(month,{month:'short',year:'numeric'});
  $('#currency').value=state().currency;securityStatus();$('#demo-banner').hidden=!demo;$('#demo-button').hidden=!!demo;updateStorageNotice();route(false);
 }
-function setMonth(value){if(!/^\d{4}-\d{2}$/.test(value)||value<'1900-01'||value>'9999-12')return;month=value;usageAnchor=month+'-01';if(!selectedDate.startsWith(month))selectedDate=month===today().slice(0,7)?today():month+'-01';render();}
+function setMonth(value,anchor=value+'-01'){if(!/^\d{4}-\d{2}$/.test(value)||value<'1900-01'||value>'9999-12')return;month=value;usageAnchor=anchor;if(!selectedDate.startsWith(month))selectedDate=month===today().slice(0,7)?today():month+'-01';render();}
 for(const id of ['overview-month','history-month','calendar-month'])$('#'+id).addEventListener('change',e=>setMonth(e.target.value));
 $$('.prev-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(month,-1))));$$('.next-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(month,1))));
 function clearPrivateViews(){budgetUI.clear();for(const id of ['usage-scope','net-value','income-value','expense-value','recent-list','transaction-list','calendar-grid','day-list','day-summary','day-title','result-count','balance-change','report-period','report-totals','report-chart','report-chart-table','report-spending'])$('#'+id).replaceChildren();historyLimit=100;historyFilterKey='';}
@@ -140,7 +140,7 @@ $('#add-button').addEventListener('click',()=>openTransaction());$('#mobile-add'
 $('#date').addEventListener('invalid',()=>$('#transaction-options').open=true);
 $('#transaction-form').addEventListener('submit',async e=>{
  e.preventDefault();try{const t=validateTransaction({id:editingId||crypto.randomUUID(),description:$('#description').value.trim()||defaultDescription($('input[name=type]:checked').value),amount:parseAmount($('#amount').value),date:$('#date').value,type:$('input[name=type]:checked').value,tags:$('#tags').value.split(',').map(s=>s.trim()).filter(Boolean)});
- const firstSave=!editingId&&state().transactions.length===0;const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){if(!demo){analytics.track(editingId?'transaction_updated':'transaction_created');if(firstSave)analytics.track('first_transaction');}setMonth(t.date.slice(0,7));selectedDate=t.date;if(activeView()==='calendar')calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Download your transaction history before closing.':'Saved.');}else $('#form-error').textContent=toastMessage;}
+ const firstSave=!editingId&&state().transactions.length===0;const tx=state().transactions.filter(x=>x.id!==t.id);tx.push(t);if(await commit({...state(),transactions:tx})){if(!demo){analytics.track(editingId?'transaction_updated':'transaction_created');if(firstSave)analytics.track('first_transaction');}setMonth(t.date.slice(0,7),t.date);selectedDate=t.date;if(activeView()==='calendar')calendar();$('#transaction-dialog').close();notify(demo?'Demo transaction saved.':storageUnavailable?'Saved for this session only. Download your transaction history before closing.':'Saved.');}else $('#form-error').textContent=toastMessage;}
  catch(err){$('#form-error').textContent=err.message;}
 });
 document.addEventListener('click',async e=>{

@@ -10,7 +10,7 @@
  window.addEventListener('error',event=>{if(event.target===window)failed();});
  window.addEventListener('unhandledrejection',failed);
  function styles(){
-  clearTimeout(styleTimer);styleLink?.remove();styleTimer=setTimeout(()=>{document.querySelector('#style-alert').hidden=false;},8000);const link=document.createElement('link');styleLink=link;link.rel='stylesheet';link.href='./styles-v19.css';link.dataset.workspaceStyles='';
+  clearTimeout(styleTimer);styleLink?.remove();styleTimer=setTimeout(()=>{document.querySelector('#style-alert').hidden=false;},8000);const link=document.createElement('link');styleLink=link;link.rel='stylesheet';link.href='./styles-v20.css';link.dataset.workspaceStyles='';
   link.addEventListener('load',()=>{clearTimeout(styleTimer);document.documentElement.dataset.workspaceStyles='ready';document.querySelector('#style-alert').hidden=true;window.dispatchEvent(new Event('flowtrack-styles-ready'));});
   link.addEventListener('error',()=>{document.documentElement.dataset.startupFailed='true';window.dispatchEvent(new Event('flowtrack-startup-failed'));clearTimeout(styleTimer);document.querySelector('#style-alert').hidden=false;});document.head.append(link);
  }
