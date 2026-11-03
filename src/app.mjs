@@ -1,3 +1,5 @@
+import {initBudgetUI} from './budget-ui.mjs';
+import {prepareBudgetChange} from './budgets.mjs';
 import {periodRange,periodRows,periodReport,periodLabel,movePeriod} from './periods.mjs';
 import {reportData} from './reports.mjs';
 import {initPDFSave} from './pdf-save.mjs';
@@ -10,8 +12,8 @@ const deviceAvailable=()=>getDeviceApi().then(api=>api.deviceAvailable()).catch(
 const createDeviceUnlock=async options=>(await getDeviceApi()).createDeviceUnlock(options);
 const unlockWithDevice=async(descriptor,options)=>(await getDeviceApi()).unlockWithDevice(descriptor,options);
 const deviceError=error=>deviceApi?deviceApi.deviceError(error):error?.message||'Device unlock unavailable. Use your PIN.';
-import {LedgerVault,isVault,validateVault} from '../dist/vault-v8.mjs';
-import { STORAGE_KEY,CURRENCIES,today,parseAmount,validateTransaction,validateState,emptyState,totals,filterTransactions,money,shiftMonth } from '../dist/core-v2.mjs';
+import {LedgerVault,isVault,validateVault} from '../dist/vault-v9.mjs';
+import { STORAGE_KEY,CURRENCIES,today,parseAmount,validateTransaction,validateState,emptyState,totals,filterTransactions,money,shiftMonth } from '../dist/core-v3.mjs';
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -34,6 +36,7 @@ function hideToast(){pendingDeletion=null;toastMessage='';toastDeadline=0;clearT
 const defaultDescription=type=>type==='income'?'Income':'Expense';
 
 const vault=new LedgerVault({getItem:key=>localStorage.getItem(key),setItem:(key,value)=>localStorage.setItem(key,value),removeItem:key=>localStorage.removeItem(key)});
+const budgetUI=initBudgetUI({getState:state,save:commit,notify,canUse:()=>!vault.locked&&!needsSetup(),isDemo:()=>!!demo,getPeriod:()=>usagePeriod,getAnchor:()=>usageAnchor});
 let deviceSupported=false,deviceBusy=false,deviceAbort=null;
 try{window.name='flowtrack-app';}catch{}
 let saving=false,lockRequested=false,pendingReload=false,lastActivity=Date.now(),pinMode='enable',pendingRecovery=null,unlockFailures=0,booted=false,automaticDeviceUnlockPending=true,automaticDeviceUnlockCancelled=false;
@@ -52,9 +55,9 @@ function updateStorageNotice(){
 async function commit(next){
  if(saving||vault.locked){notify('Wait for saving to finish, or unlock FlowTrack.');return false;}
  saving=true;
- try{next=validateState(next);if(demo){demo=next;render();return true;}if(corrupt)throw Error('Saved data is unreadable. Recover it from Settings before making changes.');
+ try{const budgetChange=prepareBudgetChange(state(),next);next=budgetChange.state;if(demo){demo=next;render();return true;}if(corrupt)throw Error('Saved data is unreadable. Recover it from Settings before making changes.');
    if(!storageUnavailable||vault.enabled){try{await vault.save(next);}catch(e){throw Error('Could not save. Your change was not applied. '+e.message);}}
-   data=next;render();return true;
+   data=next;render();budgetUI.alert(budgetChange.alert);return true;
  }catch(e){if(!demo)analytics.error('save_failed');notify(e.message);return false;}
  finally{finishSaving();}
 }
@@ -78,7 +81,7 @@ function table(rows,emptyText='No transactions yet',add=false){
  if(!rows.length)return empty(emptyText,add?'Tap + Add to start.':'Try another date or search.');
  return `<div class="entry-list">${rows.map(t=>`<button class="entry-row" data-edit="${escape(t.id)}"><span class="sr-only">Edit </span><span class="transaction-icon ${t.type}">${icon(transactionIcon(t))}</span><span class="entry-copy"><span class="transaction-description">${escape(t.description)}</span><span class="entry-date">${escape(dateLabel(t.date,{day:'numeric',month:'short',year:'numeric'}))}</span>${t.tags.length?`<span class="entry-tags"><span class="sr-only">Tags: </span>${t.tags.map(tag=>`<span class="entry-tag">${escape(tag)}</span>`).join('')}</span>`:''}</span><span class="entry-amount ${t.type==='income'?'positive':''}">${t.type==='income'?'+':'−'}${escape(fmt(t.amount))}</span></button>`).join('')}</div>`;
 }
-function overview(){
+function overview(){budgetUI.render();
  const rows=filterTransactions(periodRows(state().transactions,usagePeriod,usageAnchor)),sum=totals(rows);
  $('#net-value').textContent=fmt(sum.net);$('#income-value').textContent=fmt(sum.income);$('#expense-value').textContent=fmt(sum.expense);
  const earlier=movePeriod(usagePeriod,usageAnchor,-1),previous=earlier?totals(periodRows(state().transactions,usagePeriod,earlier)).net:0,change=sum.net-previous;
@@ -121,12 +124,12 @@ function render(){
 function setMonth(value){if(!/^\d{4}-\d{2}$/.test(value)||value<'1900-01'||value>'9999-12')return;month=value;usageAnchor=month+'-01';if(!selectedDate.startsWith(month))selectedDate=month===today().slice(0,7)?today():month+'-01';render();}
 for(const id of ['overview-month','history-month','calendar-month'])$('#'+id).addEventListener('change',e=>setMonth(e.target.value));
 $$('.prev-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(month,-1))));$$('.next-month').forEach(b=>b.addEventListener('click',()=>setMonth(shiftMonth(month,1))));
-function clearPrivateViews(){for(const id of ['usage-scope','net-value','income-value','expense-value','recent-list','transaction-list','calendar-grid','day-list','day-summary','day-title','result-count','balance-change','report-period','report-totals','report-chart','report-chart-table','report-spending'])$('#'+id).replaceChildren();historyLimit=100;historyFilterKey='';}
+function clearPrivateViews(){budgetUI.clear();for(const id of ['usage-scope','net-value','income-value','expense-value','recent-list','transaction-list','calendar-grid','day-list','day-summary','day-title','result-count','balance-change','report-period','report-totals','report-chart','report-chart-table','report-spending'])$('#'+id).replaceChildren();historyLimit=100;historyFilterKey='';}
 function activeView(){const name=location.hash.slice(1);return Object.hasOwn(views,name)?name:'overview';}
 const views={overview:'Home',transactions:'Transactions',calendar:'Transactions',reports:'Reports',settings:'Settings'};
 // Analytics failure must never block the offline ledger or PIN gate.
 const analytics={track(event){try{window.dispatchEvent(new CustomEvent('flowtrack-usage',{detail:{event}}));}catch{}},error(code){try{window.dispatchEvent(new CustomEvent('flowtrack-usage',{detail:{event:'app_error',code}}));}catch{}}};
-function route(focus=true){syncUsage();const view=Object.hasOwn(views,location.hash.slice(1))?location.hash.slice(1):'overview';$('#heading-month').hidden=!['overview','reports'].includes(view);$('#app-shell').dataset.view=view;$$('.view').forEach(v=>v.hidden=v.id!==view+'-view');$$('nav a').forEach(a=>{a.classList.toggle('active',a.dataset.view===(view==='calendar'?'transactions':view));if(a.dataset.view===(view==='calendar'?'transactions':view))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#page-title').textContent=views[view];$('#breadcrumb').textContent=views[view];$('#add-button').hidden=view==='settings';if(vault.locked||needsSetup())clearPrivateViews();else if(view==='overview')overview();else if(view==='transactions')history();else if(view==='calendar')calendar();else if(view==='reports')reports();if(focus)$('#main').focus({preventScroll:true});}
+function route(focus=true){syncUsage();const view=Object.hasOwn(views,location.hash.slice(1))?location.hash.slice(1):'overview';$('#heading-month').hidden=!['overview','reports'].includes(view);$('#app-shell').dataset.view=view;$$('.view').forEach(v=>v.hidden=v.id!==view+'-view');$$('nav a').forEach(a=>{a.classList.toggle('active',a.dataset.view===(view==='calendar'?'transactions':view));if(a.dataset.view===(view==='calendar'?'transactions':view))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#page-title').textContent=views[view];$('#breadcrumb').textContent=views[view];$('#add-button').hidden=view==='settings';if(vault.locked||needsSetup())clearPrivateViews();else if(view==='overview')overview();else if(view==='transactions')history();else if(view==='calendar')calendar();else if(view==='reports')reports();else if(view==='settings')budgetUI.renderSettings();if(focus)$('#main').focus({preventScroll:true});}
 window.addEventListener('hashchange',()=>{route();analytics.track('page_view');});
 
 function openTransaction(id=null,date=null){
