@@ -1,5 +1,13 @@
 # FlowTrack
 
+## Optional budgets (1.21)
+
+Settings → Budget offers monthly limits, optional yearly/daily limits and alerts. Home shows one spending bar; a daily guide divides the remaining monthly amount by remaining days (including today). Weeks show the monthly budget; Year uses its yearly limit. Recorded expenses count, including dated entries inside the selected period. Limits reset by calendar period and weeks remain Monday–Sunday.
+
+Saving an expense can announce the highest newly crossed threshold (50/90/100). Previously announced levels are retained after edits/deletions; one save shows at most one alert. Device notifications are optional and permission-based, contain no financial amounts, and are triggered by saving records while the app is open. There is no push server, bank monitoring or closed-app reminder service. In-app alerts remain available if device notifications are unavailable.
+
+Budgets and alert history are encrypted together with records under the existing storage key. Old version-1 records stay unchanged on reading; the first budget save uses version 2. New vault/core modules retain PIN/recovery compatibility. Old validators reject version 2 instead of dropping budgets; do not downgrade after saving budgets. Backups retain settings and alert history. Currency changes never convert budgets; configure limits in the new currency. Period navigation does not write records.
+
 ## Day, week, month and year (1.20)
 
 Home and Reports share a compact period selector, date/month picker and previous/next buttons. Weeks run Monday–Sunday. Totals, recent entries, comparisons, chart and spending breakdown follow the selected period. Calendar and History retain their existing filters. Period browsing never saves or changes financial records; month remains the initial view.
