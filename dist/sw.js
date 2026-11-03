@@ -1,9 +1,9 @@
 const BASE=new URL('./',self.location.href);
 const PREFIX='flowtrack:'+BASE.pathname+':';
-const CACHE=PREFIX+'v39-20261102-home-arrows';
+const CACHE=PREFIX+'v40-20261102-budgets';
 const INDEX=new URL('index.html',BASE).href;
 const OPEN=new URL('open.html',BASE).href;
-const SHELL=['index.html','styles-v18.css','app-v25.mjs','analytics-v2.mjs','device-v1.mjs','history-pdf-v2.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
+const SHELL=['index.html','styles-v19.css','app-v26.mjs','analytics-v2.mjs','device-v1.mjs','history-pdf-v2.mjs','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png','icon-maskable-512.png'].map(p=>new URL(p,BASE).href);
 // Save the visible screen before installation icons and optional tools.
 const OPTIONAL=SHELL.filter(url=>/\/analytics-v\d+\.mjs$/.test(url));
 const CORE=SHELL.filter(url=>/\/(?:index\.html|app-v\d+\.mjs|styles-v\d+\.css|icon\.svg)$/.test(url));
@@ -22,3 +22,5 @@ self.addEventListener('fetch',e=>{
   // background, then the existing Update button activates that version.
   e.respondWith(caches.open(CACHE).then(async cache=>(await cache.match(navigation?INDEX:url.href))||fetch(e.request)));
 });
+
+self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{const client=list.find(c=>new URL(c.url).origin===BASE.origin);return client?client.focus():self.clients.openWindow(BASE.href+'#overview');}));});
