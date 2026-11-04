@@ -7,7 +7,7 @@ function setup(path='/',failInstall=false,failAnalytics=false){
  const events={},stores=new Map(),deleted=[],calls=[],stages=[];let skipped=0,claimed=0;
  const caches={open:async name=>{if(!stores.has(name))stores.set(name,new Map());const map=stores.get(name);return {match:async url=>map.get(url),add:async url=>{if(failAnalytics)throw Error('analytics blocked');map.set(url,new Response('saved:'+url));},addAll:async urls=>{stages.push([...urls]);if(failInstall)throw Error('network failure');for(const url of urls)map.set(url,new Response('saved:'+url));}};},keys:async()=>[...stores.keys()],delete:async name=>{deleted.push(name);return stores.delete(name);}};
  vm.runInNewContext(source,{URL,Promise,self:{location:{href:'https://example.test'+path+'sw.js'},addEventListener:(name,fn)=>events[name]=fn,skipWaiting:()=>{skipped++;},clients:{claim:async()=>{claimed++;}}},caches,fetch:request=>{calls.push(request.url);return new Promise(()=>{});}});
- const active='flowtrack:'+path+':v41-20261102-expenditure',index='https://example.test'+path+'index.html';
+ const active='flowtrack:'+path+':v42-20261103-countries',index='https://example.test'+path+'index.html';
  function fetch(url,mode='navigate',method='GET'){let result;events.fetch({request:{url,mode,method},respondWith:p=>result=p});return result;}
  async function run(name){let task;events[name]({waitUntil:p=>task=p});await task;}
  return {events,stores,deleted,calls,stages,active,index,fetch,run,skipped:()=>skipped,claimed:()=>claimed};
@@ -20,4 +20,4 @@ test('failed shell installation removes only the incomplete candidate and leaves
 test('an update activates only when the existing explicit update message arrives',()=>{const s=setup();s.events.message({data:'other'});assert.equal(s.skipped(),0);s.events.message({data:'SKIP_WAITING'});assert.equal(s.skipped(),1);});
 
 test('offline setup finishes the visible screen before downloading icons and tools',async()=>{const s=setup();await s.run('install');assert.equal(s.stages.length,2);assert.equal(s.stages[0].length,4);assert.ok(s.stages[0].every(x=>!x.endsWith('.png')));assert.equal(s.stages[1].length,6);assert.ok(s.stages[1].some(x=>x.endsWith('icon-512.png')));});
-test('blocked optional analytics does not prevent offline app installation',async()=>{const s=setup('/',false,true);await s.run('install');assert.ok(s.stores.get(s.active).has(s.index));assert.ok(![...s.stores.get(s.active).keys()].some(url=>url.endsWith('/analytics-v2.mjs')));await s.run('activate');assert.equal(s.claimed(),1);});
+test('blocked optional analytics does not prevent offline app installation',async()=>{const s=setup('/',false,true);await s.run('install');assert.ok(s.stores.get(s.active).has(s.index));assert.ok(![...s.stores.get(s.active).keys()].some(url=>url.endsWith('/analytics-v3.mjs')));await s.run('activate');assert.equal(s.claimed(),1);});
