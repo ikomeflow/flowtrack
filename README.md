@@ -1,5 +1,9 @@
 # FlowTrack
 
+## Country analytics (1.23)
+
+The private ikomeflow.com dashboard adds country estimates alongside existing mobile/tablet/desktop and browser/installed summaries. The new analytics client requires renewed consent before version 3 events. Prior declines remain declined; older clients and historical events retain Unknown country. The host's own GEOIP_COUNTRY_CODE variable supplies country without an external IP lookup or precise-location permission. Only an allowlisted country code is saved, never the raw address. Country totals count each participating browser once using its latest event in the selected period; VPNs and missing signals affect accuracy. Existing retention, admin access, privacy signals and offline behavior apply. Deploy the additive plugin migration first and verify hosting GeoIP before publishing analytics-v3 and the updated notice. Hostinger documents GeoIPEnable On in .htaccess; back up the file and preserve all existing routing rules.
+
 ## Expenditure limits (1.22)
 
 Settings → Budget now has one **Expenditure limit** field with Daily, Weekly, Monthly and Yearly choices. Draft amounts stay in the form when switching periods; Save limits commits all changes together. Existing limits and alert history carry over. Weekly spending runs Monday–Sunday, resets with each new week, and uses the same once-only 50/90/100 threshold alerts. Home uses the limit matching its selected period when configured. Old budget readers reject the weekly extension rather than silently dropping it. The new complete app/style cache retains prior assets and the existing domain, ledger key, PIN and recovery formats.
