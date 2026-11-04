@@ -50,6 +50,10 @@
     $('funnel-note').textContent=Number(f.started)?Math.round(100*Number(f.first_transaction)/Number(f.started))+'% of observed setup starts reached a first saved transaction.':'No first-use setup steps observed in this period.';
     table('errors',data.errors,e=>[errorLabels[e.code]||'App error',count(e.count),count(e.browsers)],'No errors received in this period.');
     table('events',data.events,e=>[labels[e.event]||'App activity',count(e.count),count(e.browsers)],'No activity received in this period.');
+    const countries=data.countries||[],known=countries.filter(row=>row.country!=='ZZ'),countryName=code=>{if(code==='ZZ')return 'Unknown';try{return new Intl.DisplayNames(['en'],{type:'region'}).of(code);}catch{return code;}};
+    $('country-count').textContent=count(known.length)+' countr'+(known.length===1?'y':'ies');
+    table('countries',countries,row=>[countryName(row.country),count(row.browsers)],'No country estimates received yet.',2);
+    $('country-note').textContent=!data.country_ready?'Country detection is unavailable on this host.':!known.length?'Country counts start after visitors accept the updated analytics notice.':'Countries reflect the latest observed visit in the selected period.';
     const devices={mobile:'Mobile',tablet:'Tablet',desktop:'Desktop',unknown:'Unknown'},modes={installed:'Installed app',browser:'Web browser',unknown:'Older app copy'};
     table('devices',data.devices,d=>[devices[d.device]||'Unknown',modes[d.mode]||'Unknown',count(d.browsers)],'No device categories received yet.');
     table('versions',data.versions,v=>[v.version==='legacy'?'Older app copy':v.version,count(v.browsers)],'No version data received yet.',2);

@@ -40,3 +40,10 @@ Rollback by reverting the frontend release commit through the existing deploymen
 ## Validation
 
 Run `npm run build`, `npm run check`, `npm test`, `php tests/analytics-collector.php` and `php tests/analytics-insights.php` (PDO SQLite required for controlled-history SQL tests). Browser QA should confirm both consent choices, consent renewal, the settings toggle, successful setup events, admin report changes, no analytics requests while declined, offline continuity and normal app operation when the analytics module is unavailable. Verify unauthorized report access, foreign origins, arbitrary context/private fields and unsafe errors are rejected, and duplicate events are ignored. Use a disposable browser ledger for write/export tests; never alter an existing user's ledger for QA.
+# Country estimates (1.3)
+
+The Countries panel counts each participating browser once using its latest event in the selected period. Country estimates use Hostinger's server-owned `GEOIP_COUNTRY_CODE` (or its rewritten equivalent), restricted to ISO country codes. Client-supplied location headers and fields are ignored or rejected. No external lookup, raw IP storage or precise location permission is used. Missing signals, older clients and retained history show Unknown. VPNs can change the country estimate.
+
+Version 3 events require renewed consent to the country notice. Versions 1 and 2 remain accepted for existing device/activity reports but never receive country values. Existing declines remain declined. The additive `country_code` column defaults to Unknown and preserves all existing rows. Thirty-day retention and administrator-only reports still apply.
+
+Deploy this plugin before the `analytics-v3.mjs` client. On Hostinger, back up `.htaccess`, add `GeoIPEnable On` outside WordPress's generated markers, and verify normal site access. The dashboard reports unavailable detection honestly until a trusted signal is present. Do not backfill countries from old activity. See [Hostinger's GeoIP instructions](https://www.hostinger.com/support/3738302-how-to-enable-geoip-at-hostinger/).
