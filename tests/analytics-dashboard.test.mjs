@@ -22,7 +22,7 @@ function fixture(days=7){return {
   daily:[{day:'2026-10-30',active:5,sessions:7},{day:'2026-11-01',active:8,sessions:11}],
   events:[{event:'transaction_created',count:4,browsers:3}],returning:{new_browsers:5,returning_browsers:3},
   retention:{cohort:0,returned:0,rate:null},funnel:{started:5,pin:4,first_transaction:2},
-  devices:[{device:'mobile',mode:'installed',browsers:6}],versions:[{version:'1.18.0',browsers:8}],
+  countries:[{country:'CM',browsers:5},{country:'CA',browsers:2},{country:'ZZ',browsers:1}],country_ready:true,devices:[{device:'mobile',mode:'installed',browsers:6}],versions:[{version:'1.18.0',browsers:8}],
   errors:[],screens:[{screen:'overview',count:10,browsers:8}],days,today:'2026-11-01',timezone:'Africa/Douala',updated:'2026-11-01T12:01:00Z'
 };}
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
@@ -87,4 +87,8 @@ test('rapid period changes discard old responses and fetch the latest selection'
 test('hidden tabs do not poll and refresh when visible again',async()=>{
   const state=boot(async()=>ok(fixture()));await flush();state.document.hidden=true;state.intervals[0]();assert.equal(state.requests.length,1);
   state.document.hidden=false;state.document.listeners.visibilitychange();await flush();assert.equal(state.requests.length,2);
+});
+test('country table labels estimates, aggregates unknown visitors and exposes unavailable detection',async()=>{
+ const data=fixture(),state=boot(async()=>ok(data));await flush();assert.equal(state.get('country-count').textContent,'2 countries');assert.equal(state.get('countries').children.length,3);assert.match(state.get('countries').textContent,/Cameroon5/);assert.match(state.get('countries').textContent,/Unknown1/);
+ data.country_ready=false;await state.get('refresh').listeners.click();await flush();assert.match(state.get('country-note').textContent,/unavailable/);assert.equal(state.get('active').textContent,'8');
 });

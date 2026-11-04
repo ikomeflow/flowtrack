@@ -2,7 +2,7 @@
 /**
  * Plugin Name: FlowTrack Analytics
  * Description: Private administrator dashboard for optional, anonymous FlowTrack usage counts. No financial records are collected.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Ikomeflow
  * Requires PHP: 7.4
  */
@@ -32,6 +32,7 @@ final class FlowTrack_Analytics {
             app_mode varchar(12) NOT NULL DEFAULT 'unknown',
             app_version varchar(16) NOT NULL DEFAULT 'legacy',
             error_code varchar(32) NOT NULL DEFAULT 'none',
+            country_code char(2) NOT NULL DEFAULT 'ZZ',
             local_day date NOT NULL,
             received_at datetime NOT NULL,
             PRIMARY KEY  (id),
@@ -49,12 +50,12 @@ final class FlowTrack_Analytics {
         ) $charset;");
         if (!wp_next_scheduled('flowtrack_analytics_cleanup')) wp_schedule_event(time(),'hourly','flowtrack_analytics_cleanup');
         if (!get_option('flowtrack_analytics_installed')) update_option('flowtrack_analytics_installed',gmdate('c'),false);
-        foreach (['device','app_mode','app_version','error_code'] as $column) {
+        foreach (['device','app_mode','app_version','error_code','country_code'] as $column) {
             if (!$wpdb->get_var("SHOW COLUMNS FROM $events LIKE '$column'")) return;
         }
-        update_option('flowtrack_analytics_schema','1.1.0',false);
+        update_option('flowtrack_analytics_schema','1.3.0',false);
     }
-    static function upgrade() { if (get_option('flowtrack_analytics_schema')!=='1.1.0') self::activate(); }
+    static function upgrade() { if (get_option('flowtrack_analytics_schema')!=='1.3.0') self::activate(); }
     static function deactivate() { wp_clear_scheduled_hook('flowtrack_analytics_cleanup'); }
     static function cleanup() {
         global $wpdb;
@@ -62,8 +63,18 @@ final class FlowTrack_Analytics {
         $wpdb->query($wpdb->prepare('DELETE FROM '.self::table('rates').' WHERE expires_at < %s',gmdate('Y-m-d H:i:s')));
     }
     static function hash($value) { return hash_hmac('sha256',$value,wp_salt('auth')); }
+    // Hosting-owned GeoIP variables only. Never trust client-supplied location headers.
+    static function country($server=null) {
+        if ($server===null) $server=$_SERVER;
+        $allowed=' AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW ';
+        foreach (['GEOIP_COUNTRY_CODE','REDIRECT_GEOIP_COUNTRY_CODE'] as $key) {
+            $value=$server[$key]??null;
+            if (is_string($value) && preg_match('/^[A-Z]{2}$/D',$value) && strpos($allowed,' '.$value.' ')!==false) return $value;
+        }
+        return 'ZZ';
+    }
     static function valid($data) {
-        if (!is_array($data) || !in_array($data['v']??null,[1,2],true)) return false;
+        if (!is_array($data) || !in_array($data['v']??null,[1,2,3],true)) return false;
         $keys=$data['v']===1 ? ['v','id','visitor','session','event','view'] : ['v','id','visitor','session','event','view','device','mode','version','error'];
         if (count($data)!==count($keys) || array_diff(array_keys($data),$keys)) return false;
         foreach (['id','visitor','session'] as $key) {
@@ -101,8 +112,8 @@ final class FlowTrack_Analytics {
         $ip=isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
         if (!self::quota('minute:'.floor($now/60).':'.$ip,120,gmdate('Y-m-d H:i:s',$now+120)) ||
             !self::quota('global:'.gmdate('Y-m-d'),100000,gmdate('Y-m-d H:i:s',$now+DAY_IN_SECONDS))) return self::error('rate_limited',429);
-        $inserted=$wpdb->query($wpdb->prepare('INSERT IGNORE INTO '.self::table().' (event_id,visitor,session_id,event_name,view_name,device,app_mode,app_version,error_code,local_day,received_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            self::hash('event:'.$data['id']),self::hash('visitor:'.$data['visitor']),self::hash('session:'.$data['session']),$data['event'],$data['view'],$data['device']??'unknown',$data['mode']??'unknown',$data['version']??'legacy',$data['error']??'none',wp_date('Y-m-d',$now),gmdate('Y-m-d H:i:s',$now)));
+        $inserted=$wpdb->query($wpdb->prepare('INSERT IGNORE INTO '.self::table().' (event_id,visitor,session_id,event_name,view_name,device,app_mode,app_version,error_code,country_code,local_day,received_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+            self::hash('event:'.$data['id']),self::hash('visitor:'.$data['visitor']),self::hash('session:'.$data['session']),$data['event'],$data['view'],$data['device']??'unknown',$data['mode']??'unknown',$data['version']??'legacy',$data['error']??'none',$data['v']===3?self::country():'ZZ',wp_date('Y-m-d',$now),gmdate('Y-m-d H:i:s',$now)));
         if ($inserted===false) return self::error('storage_unavailable',503);
         return new WP_REST_Response(null,204);
     }
@@ -155,8 +166,9 @@ final class FlowTrack_Analytics {
         $versions=$wpdb->get_results($wpdb->prepare("SELECT app_version AS version,COUNT(DISTINCT visitor) AS browsers FROM $table WHERE local_day >= %s AND received_at >= %s GROUP BY app_version ORDER BY browsers DESC",$first,$cutoff),ARRAY_A);
         $errors=$wpdb->get_results($wpdb->prepare("SELECT error_code AS code,COUNT(*) AS count,COUNT(DISTINCT visitor) AS browsers FROM $table WHERE local_day >= %s AND received_at >= %s AND event_name='app_error' GROUP BY error_code ORDER BY count DESC",$first,$cutoff),ARRAY_A);
         $screens=$wpdb->get_results($wpdb->prepare("SELECT view_name AS screen,COUNT(*) AS count,COUNT(DISTINCT visitor) AS browsers FROM $table WHERE local_day >= %s AND received_at >= %s AND event_name IN ('app_open','page_view') AND view_name IN ('overview','transactions','calendar','settings') GROUP BY view_name ORDER BY browsers DESC",$first,$cutoff),ARRAY_A);
+        $countries=$wpdb->get_results($wpdb->prepare("SELECT e.country_code AS country,COUNT(*) AS browsers FROM $table AS e INNER JOIN (SELECT visitor,MAX(id) AS latest_id FROM $table WHERE local_day >= %s AND received_at >= %s GROUP BY visitor) AS latest ON e.id=latest.latest_id GROUP BY e.country_code ORDER BY browsers DESC,e.country_code",$first,$cutoff),ARRAY_A);
         if ($wpdb->last_error) return null;
-        return ['summary'=>$summary,'daily'=>$daily,'events'=>$events,'returning'=>$returning,'retention'=>$retention,'funnel'=>self::funnel($progress),'devices'=>$devices,'versions'=>$versions,'errors'=>$errors,'screens'=>$screens,'days'=>$days,'today'=>$start,'timezone'=>wp_timezone_string(),'updated'=>gmdate('c',$now),'installed'=>get_option('flowtrack_analytics_installed')];
+        return ['countries'=>$countries,'country_ready'=>self::country()!=='ZZ','summary'=>$summary,'daily'=>$daily,'events'=>$events,'returning'=>$returning,'retention'=>$retention,'funnel'=>self::funnel($progress),'devices'=>$devices,'versions'=>$versions,'errors'=>$errors,'screens'=>$screens,'days'=>$days,'today'=>$start,'timezone'=>wp_timezone_string(),'updated'=>gmdate('c',$now),'installed'=>get_option('flowtrack_analytics_installed')];
     }
     static function ajax() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message'=>'Forbidden'],403);
@@ -169,8 +181,8 @@ final class FlowTrack_Analytics {
     static function menu() { add_menu_page('FlowTrack Analytics','FlowTrack Analytics','manage_options','flowtrack-analytics',[__CLASS__,'page'],'dashicons-chart-area',30); }
     static function page() {
         if (!current_user_can('manage_options')) wp_die('Forbidden','Forbidden',['response'=>403]);
-        wp_enqueue_style('flowtrack-analytics',plugins_url('dashboard.css',__FILE__),[], '1.2.0');
-        wp_enqueue_script('flowtrack-analytics',plugins_url('dashboard.js',__FILE__),[], '1.2.0',true);
+        wp_enqueue_style('flowtrack-analytics',plugins_url('dashboard.css',__FILE__),[], '1.3.0');
+        wp_enqueue_script('flowtrack-analytics',plugins_url('dashboard.js',__FILE__),[], '1.3.0',true);
         wp_localize_script('flowtrack-analytics','FlowTrackDashboard',['url'=>admin_url('admin-ajax.php'),'nonce'=>wp_create_nonce('flowtrack_analytics')]);
         ?>
         <div class="wrap fta" id="fta-dashboard" aria-busy="true">
@@ -193,9 +205,10 @@ final class FlowTrack_Analytics {
         <details class="fta-panel fta-detail" id="fta-issues"><summary><span>Reported errors</span><span class="fta-detail-count" id="fta-error-count">—</span></summary><p class="fta-muted">Safe error categories received in the selected period. Absence of reports does not guarantee the app is error-free.</p><div class="fta-table-scroll"><table class="widefat"><thead><tr><th scope="col">Problem</th><th scope="col">Reports</th><th scope="col">Browsers</th></tr></thead><tbody id="fta-errors"></tbody></table></div></details>
         <details class="fta-panel fta-detail"><summary><span>App activity</span><span class="fta-detail-count" id="fta-event-count">—</span></summary><p class="fta-muted">Event totals and participating browsers for the selected period.</p><div class="fta-table-scroll"><table class="widefat"><thead><tr><th scope="col">Activity</th><th scope="col">Events</th><th scope="col">Browsers</th></tr></thead><tbody id="fta-events"></tbody></table></div></details>
         <details class="fta-panel fta-detail"><summary><span>Popular screens</span><span class="fta-detail-count" id="fta-screen-count">—</span></summary><div class="fta-table-scroll"><table class="widefat"><thead><tr><th scope="col">Screen</th><th scope="col">Views</th><th scope="col">Browsers</th></tr></thead><tbody id="fta-screens"></tbody></table></div></details>
+        <details class="fta-panel fta-detail" id="fta-country-details"><summary><span>Countries</span><span class="fta-detail-count" id="fta-country-count">—</span></summary><div class="fta-table-scroll"><table class="widefat"><thead><tr><th scope="col">Country</th><th scope="col">Visitors</th></tr></thead><tbody id="fta-countries"></tbody></table></div><p class="fta-muted" id="fta-country-note"></p><p class="fta-fine">Latest country estimate per participating browser. VPNs can change the estimate. Older copies appear as Unknown.</p></details>
         <details class="fta-panel fta-detail"><summary><span>Devices &amp; app versions</span><span class="fta-detail-count" id="fta-device-count">—</span></summary><div class="fta-table-scroll"><table class="widefat"><thead><tr><th scope="col">Device</th><th scope="col">Access</th><th scope="col">Browsers</th></tr></thead><tbody id="fta-devices"></tbody></table></div><h3>App versions</h3><div class="fta-table-scroll"><table class="widefat"><thead><tr><th scope="col">Version</th><th scope="col">Browsers</th></tr></thead><tbody id="fta-versions"></tbody></table></div><p class="fta-fine">Older copies appear as unknown. One browser can appear in several categories during the period.</p></details></div>
         <footer class="fta-footer"><p id="fta-last">Waiting for the first participating visitor.</p><p class="fta-fine">Counts are estimates from consenting browsers, not account or person totals. Auto-refreshes every minute while this page is visible.</p></footer>
-        <details class="fta-panel"><summary>How these numbers work</summary><p>“Users” means anonymous browser identifiers, not registered people. Multiple tabs share an identifier; different devices, cleared storage and identifiers rotating after 30 days can count separately. Sessions crossing midnight appear on both days. Live users are approximate: visible pages send a heartbeat about once a minute, stopping after five minutes without interaction. Closing a page can take five minutes to disappear.</p><p>Analytics are off until a visitor opts in. Global Privacy Control and Do Not Track are respected. Offline activity is not queued. There is no historical backfill. These are estimates and the public collection endpoint cannot prove that events came from a real person.</p><p>Only fixed event and setup-step names, fixed screen names, coarse device/access categories, app versions, safe error codes, server timestamps and salted anonymous identifiers are stored. Records expire after 30 days and are removed by hourly WordPress cleanup; expired records are excluded from every report. Rate-limit buckets expire within a day. No IP addresses, user agents, referrers, URLs, transaction contents, PINs or payment data are stored by this plugin. The hosting provider may retain normal request logs.</p><p>Only WordPress administrators with manage_options access can view this dashboard. It refreshes every 60 seconds while visible. No subscriptions or payment features are included.</p></details></div>
+        <details class="fta-panel"><summary>How these numbers work</summary><p>“Users” means anonymous browser identifiers, not registered people. Multiple tabs share an identifier; different devices, cleared storage and identifiers rotating after 30 days can count separately. Sessions crossing midnight appear on both days. Live users are approximate: visible pages send a heartbeat about once a minute, stopping after five minutes without interaction. Closing a page can take five minutes to disappear.</p><p>Analytics are off until a visitor opts in. Global Privacy Control and Do Not Track are respected. Offline activity is not queued. There is no historical backfill. These are estimates and the public collection endpoint cannot prove that events came from a real person.</p><p>Only fixed event and setup-step names, fixed screen names, coarse device/access categories, estimated country codes after renewed consent, app versions, safe error codes, server timestamps and salted anonymous identifiers are stored. Records expire after 30 days and are removed by hourly WordPress cleanup; expired records are excluded from every report. Rate-limit buckets expire within a day. No IP addresses, user agents, referrers, URLs, transaction contents, PINs or payment data are stored by this plugin. The hosting server derives country from the network connection without an external lookup service. No precise location is requested, and earlier activity is never assigned a country retroactively. The hosting provider may retain normal request logs.</p><p>Only WordPress administrators with manage_options access can view this dashboard. It refreshes every 60 seconds while visible. No subscriptions or payment features are included.</p></details></div>
         <?php
     }
 }

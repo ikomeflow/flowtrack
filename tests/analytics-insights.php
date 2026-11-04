@@ -15,7 +15,7 @@ class InsightDB{
   $this->pdo=class_exists('Pdo\\Sqlite')?new Pdo\Sqlite('sqlite::memory:'):new PDO('sqlite::memory:');$this->pdo->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
   $dateDiff=function($a,$b){return (int)((strtotime($a)-strtotime($b))/86400);};
   if(method_exists($this->pdo,'createFunction'))$this->pdo->createFunction('DATEDIFF',$dateDiff,2);else $this->pdo->sqliteCreateFunction('DATEDIFF',$dateDiff,2);
-  $this->pdo->exec("CREATE TABLE test_flowtrack_analytics_events (id INTEGER PRIMARY KEY AUTOINCREMENT,event_id TEXT UNIQUE,visitor TEXT,session_id TEXT,event_name TEXT,view_name TEXT,device TEXT DEFAULT 'unknown',app_mode TEXT DEFAULT 'unknown',app_version TEXT DEFAULT 'legacy',error_code TEXT DEFAULT 'none',local_day TEXT,received_at TEXT)");
+  $this->pdo->exec("CREATE TABLE test_flowtrack_analytics_events (id INTEGER PRIMARY KEY AUTOINCREMENT,event_id TEXT UNIQUE,visitor TEXT,session_id TEXT,event_name TEXT,view_name TEXT,device TEXT DEFAULT 'unknown',app_mode TEXT DEFAULT 'unknown',app_version TEXT DEFAULT 'legacy',error_code TEXT DEFAULT 'none',country_code TEXT DEFAULT 'ZZ',local_day TEXT,received_at TEXT)");
   $this->pdo->exec('CREATE TABLE test_flowtrack_analytics_rates (bucket TEXT PRIMARY KEY,hits INTEGER,expires_at TEXT)');
  }
  function prepare($sql,...$args){$i=0;return preg_replace_callback('/%[sd]/',function($m)use(&$i,$args){$value=$args[$i++];return $m[0]==='%d'?(string)(int)$value:$this->pdo->quote((string)$value);},$sql);}
@@ -47,11 +47,21 @@ check(count($data['errors'])===2 && (int)$data['errors'][0]['browsers']===1,'saf
 check(count($data['devices'])===3 && count($data['versions'])===2,'device, installed access and legacy version categories are preserved');
 check(in_array('settings',array_column($data['screens'],'screen'),true),'feature popularity includes workspace screens');
 check(!array_key_exists('visitor',$data) && !array_key_exists('visitor',$data['funnel']),'reports expose aggregates, not browser identifier lists');
+check(count($data['countries'])===1 && $data['countries'][0]['country']==='ZZ','historical activity has no country backfill');
+$wpdb->query("UPDATE test_flowtrack_analytics_events SET country_code='CM' WHERE visitor='".hash('sha256','a')."'");
+fixture('a',0);$wpdb->query("UPDATE test_flowtrack_analytics_events SET country_code='CA' WHERE id=(SELECT MAX(id) FROM test_flowtrack_analytics_events)");
+$geo=FlowTrack_Analytics::stats(7,$clock);$countryRows=array_column($geo['countries'],'browsers','country');check((int)$countryRows['CA']===1 && !isset($countryRows['CM']),'each browser contributes only its latest country in the selected period');
+check(array_sum(array_map('intval',$countryRows))===(int)$wpdb->get_var("SELECT COUNT(DISTINCT visitor) FROM test_flowtrack_analytics_events WHERE local_day>='2026-10-24' AND received_at>='2026-09-30 12:00:00'"),'country totals do not double-count events');
+check(!str_contains(json_encode($geo['countries']),'visitor'),'country report contains aggregate counts only');
 $wpdb=new InsightDB();$_SERVER['REMOTE_ADDR']='192.0.2.1';
 $payload=['v'=>2,'id'=>'11111111-1111-4111-8111-111111111111','visitor'=>'22222222-2222-4222-8222-222222222222','session'=>'33333333-3333-4333-8333-333333333333','event'=>'app_error','view'=>'overview','device'=>'mobile','mode'=>'installed','version'=>'1.15.0','error'=>'save_failed'];
 check(FlowTrack_Analytics::collect(new InsightRequest($payload))->status===204,'collector stores valid context and safe failure code');
 check(FlowTrack_Analytics::collect(new InsightRequest($payload))->status===204 && (int)$wpdb->get_var('SELECT COUNT(*) FROM test_flowtrack_analytics_events')===1,'duplicate event IDs do not duplicate statistics');
 $row=$wpdb->get_row('SELECT * FROM test_flowtrack_analytics_events');check($row['visitor']!==$payload['visitor'] && $row['session_id']!==$payload['session'] && $row['error_code']==='save_failed','stored identifiers are salted hashes and error content is bounded');
+$_SERVER['GEOIP_COUNTRY_CODE']='CM';check($row['country_code']==='ZZ','version 2 consent cannot authorize a country');
+$payload['v']=3;$payload['id']='44444444-4444-4444-8444-444444444444';check(FlowTrack_Analytics::collect(new InsightRequest($payload))->status===204,'version 3 country event accepted');
+$row=$wpdb->get_row('SELECT * FROM test_flowtrack_analytics_events ORDER BY id DESC LIMIT 1');check($row['country_code']==='CM','only renewed-consent events receive the trusted country');
+check(!str_contains(json_encode($row),$_SERVER['REMOTE_ADDR']),'raw IP address never persists in analytics');
 $expires=gmdate('Y-m-d H:i:s',time()+120);check(FlowTrack_Analytics::quota('fixture-quota',2,$expires) && FlowTrack_Analytics::quota('fixture-quota',2,$expires) && !FlowTrack_Analytics::quota('fixture-quota',2,$expires),'rate limit enforces the configured threshold');
-$wpdb->query($wpdb->prepare("INSERT INTO test_flowtrack_analytics_events (event_id,received_at) VALUES ('expired',%s)",gmdate('Y-m-d H:i:s',time()-31*86400)));FlowTrack_Analytics::cleanup();check((int)$wpdb->get_var('SELECT COUNT(*) FROM test_flowtrack_analytics_events')===1,'retention cleanup removes expired rows and preserves current records');
+$wpdb->query($wpdb->prepare("INSERT INTO test_flowtrack_analytics_events (event_id,received_at) VALUES ('expired',%s)",gmdate('Y-m-d H:i:s',time()-31*86400)));FlowTrack_Analytics::cleanup();check((int)$wpdb->get_var('SELECT COUNT(*) FROM test_flowtrack_analytics_events')===2,'retention cleanup removes expired rows and preserves current records');
 echo "Insights SQL and storage checks passed.\n";

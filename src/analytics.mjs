@@ -1,5 +1,5 @@
 // Fixed categories only: never receive a ledger, exception or user-entered text.
-export const APP_VERSION='1.19.0';
+export const APP_VERSION='1.23.0';
 export const EVENTS=new Set(['app_open','page_view','heartbeat','transaction_created','transaction_updated','transaction_deleted','backup_exported','pdf_exported','backup_restored','setup_started','pin_setup_completed','first_transaction','app_error']);
 export const ERROR_CODES=new Set(['save_failed','pdf_export_failed','restore_failed','startup_failed','offline_setup_failed']);
 const VIEWS=new Set(['overview','transactions','calendar','settings','locked','setup','startup']);
@@ -16,9 +16,9 @@ export function createAnalytics(env){
  const write=(key,value)=>{try{env.storage.setItem(PREFIX+key,JSON.stringify(value));return true;}catch{return false;}};
  const clear=()=>{for(const key of ['visitor','session'])try{env.storage.removeItem(PREFIX+key);}catch{}opened=false;errorTimes.clear();};
  const protectedBrowser=()=>env.privacySignal();
- const choice=()=>read('consent')===false?false:read('consent')===true&&read('consent_version')===2?true:null;
+ const choice=()=>read('consent')===false?false:read('consent')===true&&read('consent_version')===3?true:null;
  const enabled=()=>!stopped&&!protectedBrowser()&&choice()===true;
- function consent(value){clear();write('consent_version',2);write('consent',value===true&&!protectedBrowser());if(enabled())track('app_open');}
+ function consent(value){clear();write('consent_version',3);write('consent',value===true&&!protectedBrowser());if(enabled())track('app_open');}
  function track(event,view=env.view(),error='none'){
   if(!enabled()||!EVENTS.has(event)||!VIEWS.has(view)||!env.online()||!env.visible())return false;
   if(event==='app_error'?!ERROR_CODES.has(error):error!=='none')return false;
@@ -32,7 +32,7 @@ export function createAnalytics(env){
   if(!session||typeof session.id!=='string'||now-session.last>=30*60000||now<session.last)session={id:env.uuid(),last:now};
   session.last=now;if(!write('session',session))return false;
   const raw=env.context?.()||{},device=['mobile','tablet','desktop','unknown'].includes(raw.device)?raw.device:'unknown',mode=['browser','installed'].includes(raw.mode)?raw.mode:'browser';
-  const payload={v:2,id:env.uuid(),visitor:visitor.id,session:session.id,event,view,device,mode,version:APP_VERSION,error};
+  const payload={v:3,id:env.uuid(),visitor:visitor.id,session:session.id,event,view,device,mode,version:APP_VERSION,error};
   lastSend=now;opened=true;if(event==='app_error')errorTimes.set(error,now);
   try{Promise.resolve(env.send(payload)).catch(()=>{});}catch{}
   if(event==='app_open'&&env.setupEligible?.())track('setup_started');
@@ -50,7 +50,7 @@ export function initAnalytics({view}){
   privacySignal:()=>navigator.globalPrivacyControl===true||navigator.doNotTrack==='1'||window.doNotTrack==='1',
   send:payload=>fetch('https://ikomeflow.com/wp-json/flowtrack-analytics/v1/collect',{method:'POST',mode:'cors',credentials:'omit',redirect:'error',referrerPolicy:'no-referrer',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(payload),signal:AbortSignal.timeout(5000)})});
  const prompt=document.querySelector('#analytics-choice'),toggle=document.querySelector('#analytics-toggle'),status=document.querySelector('#analytics-status');
- const refresh=()=>{tracker.sync();prompt.hidden=tracker.protectedBrowser()||tracker.choice()!==null;toggle.checked=tracker.enabled();toggle.disabled=tracker.protectedBrowser();status.textContent=tracker.protectedBrowser()?'Off. Your browser privacy preference is respected.':tracker.enabled()?'On. Anonymous usage, device category, app version and safe error codes are shared.':'Off. No usage events are sent.';};
+ const refresh=()=>{tracker.sync();prompt.hidden=tracker.protectedBrowser()||tracker.choice()!==null;toggle.checked=tracker.enabled();toggle.disabled=tracker.protectedBrowser();status.textContent=tracker.protectedBrowser()?'Off. Your browser privacy preference is respected.':tracker.enabled()?'On. Anonymous usage, estimated country, device category, app version and safe error codes are shared.':'Off. No usage events are sent.';};
  document.querySelector('#analytics-allow').addEventListener('click',()=>{tracker.activity();tracker.consent(true);refresh();if(document.documentElement.dataset.startupFailed==='true')tracker.error('startup_failed');});
  document.querySelector('#analytics-decline').addEventListener('click',()=>{tracker.consent(false);refresh();});
  toggle.addEventListener('change',()=>{tracker.activity();tracker.consent(toggle.checked);refresh();});

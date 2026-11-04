@@ -3,7 +3,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 await build({absWorkingDir:fileURLToPath(new URL('.',import.meta.url)),entryPoints:['./src/app.mjs'],bundle:true,minify:true,format:'esm',target:['es2022'],tsconfigRaw:{},outfile:'dist/app-v27.mjs',external:['./device-v1.mjs','./history-pdf-v2.mjs'],legalComments:'none'});
-await build({entryPoints:['./src/analytics-entry.mjs'],bundle:true,minify:true,format:'esm',target:['es2022'],outfile:'dist/analytics-v2.mjs',legalComments:'none'});
+await build({entryPoints:['./src/analytics-entry.mjs'],bundle:true,minify:true,format:'esm',target:['es2022'],outfile:'dist/analytics-v3.mjs',legalComments:'none'});
 // PDF creation loads only when requested; its font and code also work offline.
 await build({entryPoints:['./src/history-pdf.mjs'],bundle:true,minify:true,format:'esm',target:['es2022'],outfile:'dist/history-pdf-v2.mjs',loader:{'.ttf':'base64'},external:['html2canvas','dompurify','canvg'],legalComments:'eof'});
 await writeFile('dist/history-pdf-licenses.txt',await readFile('node_modules/jspdf/LICENSE','utf8')+'\n\nNoto Sans font:\n'+await readFile('src/NotoSans-OFL.txt','utf8'));

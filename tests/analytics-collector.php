@@ -28,6 +28,13 @@ $failure=$v2;$failure['event']='app_error';$failure['error']='save_failed';check
 $failure['error']='none';check(!FlowTrack_Analytics::valid($failure),'reject error without safe code');
 $legacyError=$valid;$legacyError['event']='app_error';check(!FlowTrack_Analytics::valid($legacyError),'legacy consent cannot send new events');
 check(FlowTrack_Analytics::collect(new Request(json_encode($v2),$headers+['sec-gpc'=>'1']))->status===204,'v2 GPC discards before storage');
+$v3=array_merge($v2,['v'=>3]);check(FlowTrack_Analytics::valid($v3),'version 3 acknowledges the country notice');
+foreach (['country'=>'US','ip'=>'192.0.2.1','latitude'=>1,'longitude'=>2] as $key=>$value){$bad=$v3;$bad[$key]=$value;check(!FlowTrack_Analytics::valid($bad),'reject client location field '.$key);}
+check(FlowTrack_Analytics::country(['GEOIP_COUNTRY_CODE'=>'CM'])==='CM','trusted hosting country');
+check(FlowTrack_Analytics::country(['REDIRECT_GEOIP_COUNTRY_CODE'=>'CA'])==='CA','trusted rewritten hosting country');
+foreach (['XX','ZZ','EU','AP','US<script>','AA','us',[],null] as $code)check(FlowTrack_Analytics::country(['GEOIP_COUNTRY_CODE'=>$code])==='ZZ','invalid or absent country stays unknown');
+check(FlowTrack_Analytics::country(['HTTP_CF_IPCOUNTRY'=>'US','HTTP_GEOIP_COUNTRY_CODE'=>'CA'])==='ZZ','client spoofed location headers ignored');
+check(FlowTrack_Analytics::collect(new Request(json_encode($v3),$headers+['sec-gpc'=>'1']))->status===204,'v3 GPC discards before storage');
 function current_user_can($cap){return false;}
 function wp_send_json_error($body,$status){throw new RuntimeException('Denied',$status);}
 function wp_die($body,$title,$args){throw new RuntimeException('Denied',$args['response']);}
